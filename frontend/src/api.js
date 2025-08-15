@@ -1,6 +1,31 @@
 // API helper for CaseCon backend
+// Centralized API base resolvers: runtime override via localStorage; default to production backend
+export function getApiBase() {
+  try {
+    const override = (typeof localStorage !== 'undefined')
+      ? localStorage.getItem('casecon_api_base')
+      : null;
+    const base = override || 'https://casecon-backend.onrender.com';
+    return String(base).replace(/\/$/, '');
+  } catch (_) {
+    return 'https://casecon-backend.onrender.com';
+  }
+}
+
+export function getUidApiBase() {
+  try {
+    const override = (typeof localStorage !== 'undefined')
+      ? localStorage.getItem('casecon_uid_api_base')
+      : null;
+    const base = override || `${getApiBase()}/uids`;
+    return String(base).replace(/\/$/, '');
+  } catch (_) {
+    return `${getApiBase()}/uids`;
+  }
+}
+
 export async function processBuca(bucaText) {
-  const res = await fetch('http://localhost:5000/process_buca', {
+  const res = await fetch(`${getApiBase()}/process_buca`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ buca_text: bucaText }),
@@ -9,7 +34,7 @@ export async function processBuca(bucaText) {
 }
 
 export async function processJovie(jovieText) {
-  const res = await fetch('http://localhost:5000/process_jovie', {
+  const res = await fetch(`${getApiBase()}/process_jovie`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jovie_text: jovieText }),
@@ -21,7 +46,7 @@ export async function uploadBucaJovie(bucaText, jovieText) {
   const payload = {};
   if (bucaText) payload.buca_text = bucaText;
   if (jovieText) payload.jovie_text = jovieText;
-  const res = await fetch('http://localhost:5000/upload', {
+  const res = await fetch(`${getApiBase()}/upload`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -30,7 +55,7 @@ export async function uploadBucaJovie(bucaText, jovieText) {
 }
 
 export async function compareData(bucaRows, jovieRows) {
-  const res = await fetch('http://localhost:5000/compare', {
+  const res = await fetch(`${getApiBase()}/compare`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ bucaRows, jovieRows }),
@@ -39,44 +64,23 @@ export async function compareData(bucaRows, jovieRows) {
 }
 
 export async function getCorrections() {
-  try {
-    const res = await fetch('http://localhost:5000/corrections');
-    if (!res.ok) {
-      console.warn('Corrections endpoint not available, continuing with empty list');
-      return { corrections: [] };
-    }
-    return res.json();
-  } catch (e) {
-    console.warn('Corrections fetch failed, continuing with empty list', e);
-    return { corrections: [] };
-  }
+  // Deprecated: Corrections feature removed. Return empty without network.
+  return { corrections: [] };
 }
 
 export async function saveCorrections(corrections) {
-  const res = await fetch('http://localhost:5000/corrections', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ corrections }),
-  });
-  return res.json();
+  // Deprecated: no-op to avoid breaking callers
+  return { ok: true };
 }
 
 export async function addCorrection(correction) {
-  const res = await fetch('http://localhost:5000/add_correction', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ correction }),
-  });
-  return res.json();
+  // Deprecated: no-op to avoid breaking callers
+  return { ok: true };
 }
 
 export async function deleteCorrection(correction) {
-  const res = await fetch('http://localhost:5000/delete_correction', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ correction }),
-  });
-  return res.json();
+  // Deprecated: no-op to avoid breaking callers
+  return { ok: true };
 }
 
 export async function exportResults() {
@@ -96,7 +100,7 @@ export async function exportResults() {
 
 // Temporary implementation - returns empty UID mapping
 // TODO: Replace with actual implementation when available
-const UID_API_BASE = process.env.REACT_APP_UID_API_URL || 'http://localhost:5000/uids';
+const UID_API_BASE = getUidApiBase();
 
 // Ensure UIDs exist for the exact names in provided rows (no aliasing or normalization here).
 // Expects backend to upsert and return mappings per exact name.

@@ -4,11 +4,9 @@ import { useJovieStore } from './store/jovieStore';
 import { getMultipleCaregiverRows } from './utils/multipleCaregiver';
 import { AppProvider } from './context/AppContext';
 import * as api from './api';
-import CorrectionsModal from './CorrectionsModal';
-import UniversalCorrectionsModal from './UniversalCorrectionsModal';
 import CopyCell from './CopyCell';
 import { formatTime12hRange } from './utils/formatting';
-import BcasTab from './tabs/CaseNrTab';
+import BcasTab from './panels/CaseNrPanel';
 import { useExchangeStore } from './store/bucaStore';
 import usePersistentStore from './store/persistentStore';
 
@@ -1272,12 +1270,6 @@ export default function App() {
               onResultEdit={handleResultEdit}
               reconRows={reconRows}
             />  
-            <CorrectionsModal
-              open={showCorrectionsModal}
-              onClose={() => setShowCorrectionsModal(false)}
-              rows={correctionsRows}
-              onSave={handleSaveCorrections}
-            />
           </div>
         </main>
         <footer className="bg-gray-100 border-t py-2 px-4 text-xs text-gray-700 flex items-center justify-between">

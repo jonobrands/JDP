@@ -1,9 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 
-import CorrectionsModal from '../CorrectionsModal';
-import UniversalCorrectionsModal from '../UniversalCorrectionsModal';
-
 export default function CompareTab({
   onCompare, onClearResults, onExport, rows = [], showCorrectionsModal, setShowCorrectionsModal, correctionsRows, setCorrectionsRows, handleSaveCorrections, universalCorrectionsOpen, setUniversalCorrectionsOpen, corrections, fetchCorrections
 }) {
@@ -20,12 +17,7 @@ export default function CompareTab({
     <div>
       {/* Legend and Controls */}
       <div className="flex gap-6 mt-2 mb-4 text-sm items-center">
-        <button
-          className="ml-auto px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs border border-gray-400"
-          onClick={() => setUniversalCorrectionsOpen && setUniversalCorrectionsOpen(true)}
-        >
-          Manage Corrections
-        </button>
+        <div className="ml-auto" />
         <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-green-100 border border-green-400 rounded"></span> Exact Match</div>
         <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-blue-100 border border-blue-400 rounded"></span> Verify Which CG</div>
         <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-orange-100 border border-orange-400 rounded"></span> Caregiver Mismatch</div>
@@ -153,20 +145,7 @@ export default function CompareTab({
           </tbody>
         </table>
       </div>
-      {/* --- Per-row Corrections Modal for BUCA Identify CG --- */}
-      <CorrectionsModal
-        open={showCorrectionsModal}
-        rows={correctionsRows}
-        onClose={() => setShowCorrectionsModal && setShowCorrectionsModal(false)}
-        onSave={handleSaveCorrections}
-      />
-      {/* --- Universal Corrections Modal for Manage Corrections --- */}
-      <UniversalCorrectionsModal
-        open={universalCorrectionsOpen}
-        corrections={corrections}
-        onClose={() => setUniversalCorrectionsOpen && setUniversalCorrectionsOpen(false)}
-        onDelete={fetchCorrections}
-      />
+      {/* Corrections feature deprecated: modals removed */}
       {/* Temporary Mismatch workflow removed (replaced by UID system) */}
     </div>
   );

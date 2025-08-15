@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
+import { getApiBase } from '../api';
 
 export default function CorrectionsTab() {
   const { corrections, setCorrections } = useAppContext();
@@ -11,7 +12,7 @@ export default function CorrectionsTab() {
   // Fetch corrections on mount
   useEffect(() => {
     setLoading(true);
-    fetch('http://localhost:5000/corrections')
+    fetch(`${getApiBase()}/corrections`)
       .then(res => res.json())
       .then(data => {
         setCorrections(data.corrections || []);
@@ -45,7 +46,7 @@ export default function CorrectionsTab() {
     setSaving(true);
     setError(null);
     try {
-      const resp = await fetch('http://localhost:5000/corrections', {
+      const resp = await fetch(`${getApiBase()}/corrections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ corrections: localCorrections })
@@ -61,7 +62,7 @@ export default function CorrectionsTab() {
   };
 
   return (
-    <div>
+    <div style={{ background: 'red', color: 'white', minHeight: '100vh', padding: 16 }}>
       <h2 className="text-xl font-bold mb-4">Manage Name Corrections</h2>
       {loading ? (
         <div>Loading corrections...</div>

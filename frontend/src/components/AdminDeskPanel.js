@@ -465,7 +465,7 @@ export default function AdminDeskPanel() {
           <input
             style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: 6, minWidth: 260 }}
             value={apiEditValue}
-            placeholder="http://localhost:5000"
+            placeholder="https://casecon-backend.onrender.com"
             onChange={e => setApiEditValue(e.target.value)}
           />
           <button

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
+import { getApiBase } from '../api';
 
 export default function LicenseTab() {
   const { licenseValid, setLicenseValid } = useAppContext();
@@ -9,7 +10,7 @@ export default function LicenseTab() {
   const handleValidate = async () => {
     setStatus('Validating...');
     try {
-      const resp = await fetch('http://localhost:5000/license', {
+      const resp = await fetch(`${getApiBase()}/license`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: input })

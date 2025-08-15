@@ -1,14 +1,15 @@
 // UID Registry Sync Utility
 // Handles online/offline fallback for UID assignments
 
-const API_URL = process.env.REACT_APP_UID_API_URL || 'http://localhost:5000/uids';
+import { getUidApiBase } from '../api';
+const getBase = () => getUidApiBase();
 const LOCAL_KEY = 'nameIdMap';
 const QUEUE_KEY = 'nameIdMapQueue';
 
 // Check if backend is reachable
 export async function isBackendAvailable() {
   try {
-    const res = await fetch(API_URL, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    const res = await fetch(getBase(), { method: 'GET', headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error('Not OK');
     return true;
   } catch (e) {
@@ -19,7 +20,7 @@ export async function isBackendAvailable() {
 // Fetch all UID mappings (tries backend, falls back to localStorage)
 export async function fetchNameIdMap() {
   if (await isBackendAvailable()) {
-    const res = await fetch(API_URL);
+    const res = await fetch(getBase());
     if (!res.ok) throw new Error('Failed to fetch from backend');
     const data = await res.json();
     // Save to localStorage as backup
@@ -38,7 +39,7 @@ export async function saveNameIdMap(nameIdMap) {
     // Try to sync any queued changes first
     await syncQueuedChanges();
     // Save current map
-    await fetch(API_URL, {
+    await fetch(getBase(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(nameIdMap)
@@ -65,7 +66,7 @@ export async function syncQueuedChanges() {
   let queue = JSON.parse(window.localStorage.getItem(QUEUE_KEY) || '[]');
   if (queue.length === 0) return;
   for (const map of queue) {
-    await fetch(API_URL, {
+    await fetch(getBase(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(map)
@@ -87,7 +88,7 @@ export async function purgeNameIdMap() {
   const backend = await isBackendAvailable();
   try {
     if (backend) {
-      await fetch(API_URL, {
+      await fetch(getBase(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(empty)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiBase } from '../api';
 
 export default function ExportTab() {
   const [loading, setLoading] = useState(false);
@@ -10,7 +11,7 @@ export default function ExportTab() {
     setError(null);
     setSuccess(false);
     try {
-      const resp = await fetch('http://localhost:5000/export');
+      const resp = await fetch(`${getApiBase()}/export`);
       if (!resp.ok) throw new Error('Export failed');
       const blob = await resp.blob();
       // Download file
