@@ -17,10 +17,12 @@ services:
     env: node
     rootDir: frontend
     buildCommand: npm ci && npm install --no-save serve && npm run build
-    startCommand: npx serve -s dist -l $PORT
+    startCommand: npx serve -s build -l $PORT
     plan: free
     autoDeploy: true
     envVars:
+      - key: NODE_VERSION
+        value: "18"
       # Provide the backend host to the React app at build time
       - key: REACT_APP_API_BASE
         fromService:
