@@ -1,12 +1,41 @@
 // API helper for CaseCon backend
-// Centralized API base resolvers: runtime override via localStorage; default to production backend
+// Centralized API base resolvers: localStorage > runtime globals > .env > derived > sensible default
+function normalizeBase(u) {
+  return String(u || '').trim().replace(/\/$/, '');
+}
+
 export function getApiBase() {
   try {
-    const override = (typeof localStorage !== 'undefined')
-      ? localStorage.getItem('casecon_api_base')
-      : null;
-    const base = override || 'https://casecon-backend.onrender.com';
-    return String(base).replace(/\/$/, '');
+    // 1) Local override for quick testing
+    const ls = (typeof localStorage !== 'undefined') ? localStorage.getItem('casecon_api_base') : null;
+    if (ls) return normalizeBase(ls);
+
+    // 2) Runtime global (can be injected in index.html before bundle)
+    if (typeof window !== 'undefined' && window.__CASECON_API_BASE) {
+      return normalizeBase(window.__CASECON_API_BASE);
+    }
+
+    // 3) Environment variables from .env at build time
+    const envBase = process.env.REACT_APP_API_BASE || process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_SERVER_BASE;
+    if (envBase) return normalizeBase(envBase);
+
+    // 4) Derive from UID API if only that is configured (strip trailing /uids)
+    const envUid = process.env.REACT_APP_UID_API_URL;
+    if (envUid) {
+      const derived = String(envUid).replace(/\/?uids\/?$/, '');
+      if (derived && derived !== envUid) return normalizeBase(derived);
+    }
+
+    // 5) Same-origin optional usage when deployed behind a reverse proxy
+    if (typeof window !== 'undefined') {
+      const useSame = process.env.REACT_APP_USE_SAME_ORIGIN === '1' || window.__CASECON_USE_SAME_ORIGIN === true;
+      if (useSame && window.location && window.location.origin) {
+        return normalizeBase(window.location.origin);
+      }
+    }
+
+    // 6) Sensible default
+    return 'https://casecon-backend.onrender.com';
   } catch (_) {
     return 'https://casecon-backend.onrender.com';
   }
@@ -14,13 +43,23 @@ export function getApiBase() {
 
 export function getUidApiBase() {
   try {
-    const override = (typeof localStorage !== 'undefined')
-      ? localStorage.getItem('casecon_uid_api_base')
-      : null;
-    const base = override || `${getApiBase()}/uids`;
-    return String(base).replace(/\/$/, '');
+    // 1) Local override
+    const ls = (typeof localStorage !== 'undefined') ? localStorage.getItem('casecon_uid_api_base') : null;
+    if (ls) return normalizeBase(ls);
+
+    // 2) Runtime global
+    if (typeof window !== 'undefined' && window.__CASECON_UID_API_BASE) {
+      return normalizeBase(window.__CASECON_UID_API_BASE);
+    }
+
+    // 3) .env explicit UID URL
+    const envUid = process.env.REACT_APP_UID_API_URL;
+    if (envUid) return normalizeBase(envUid);
+
+    // 4) Derive from API base
+    return normalizeBase(`${getApiBase()}/uids`);
   } catch (_) {
-    return `${getApiBase()}/uids`;
+    return normalizeBase(`${getApiBase()}/uids`);
   }
 }
 
@@ -98,8 +137,7 @@ export async function exportResults() {
   return new Blob([array], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
-// Temporary implementation - returns empty UID mapping
-// TODO: Replace with actual implementation when available
+// Temporary implementation for UID ensure/fetch helpers
 const UID_API_BASE = getUidApiBase();
 
 // Ensure UIDs exist for the exact names in provided rows (no aliasing or normalization here).

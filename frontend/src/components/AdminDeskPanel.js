@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { getApiBase } from '../api';
 
 // AdminDeskPanel is self-contained and does not import app stores to avoid touching existing code.
 // It discovers optional snapshot providers via globals, and gracefully degrades if the backend routes are missing.
@@ -18,31 +19,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 // - window.__APP_VERSION (optional): string version
 
 const SCHEMA_VERSION = 1;
-const API_BASE = (() => {
-  try {
-    // 1) Runtime overrides
-    if (typeof window !== 'undefined' && window.CASECON_API_BASE) {
-      return String(window.CASECON_API_BASE).replace(/\/$/, '');
-    }
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const ls = window.localStorage.getItem('casecon_api_base');
-      if (ls) return String(ls).replace(/\/$/, '');
-    }
-    // 2) Build-time env
-    const env = (typeof process !== 'undefined' && process.env) ? process.env : {};
-    const direct = env.REACT_APP_API_BASE;
-    if (direct && typeof direct === 'string') return direct.replace(/\/$/, '');
-    const uidUrl = env.REACT_APP_UID_API_URL;
-    if (uidUrl && typeof uidUrl === 'string') {
-      try {
-        const u = new URL(uidUrl);
-        return `${u.protocol}//${u.host}`;
-      } catch {}
-    }
-  } catch {}
-  return '';
-})();
-try { console.info('[AdminDesk] API_BASE =', API_BASE || '(same-origin)'); } catch {}
+const getBase = () => {
+  try { return getApiBase(); } catch { return ''; }
+};
+try { console.info('[AdminDesk] API_BASE =', getBase()); } catch {}
 
 function nowIso() {
   return new Date().toISOString();
@@ -111,9 +91,9 @@ export default function AdminDeskPanel() {
   const [busyMsg, setBusyMsg] = useState('');
   const [saveInlineName, setSaveInlineName] = useState('');
   const [conn, setConn] = useState('checking'); // 'checking' | 'connected' | 'unavailable'
-  const [apiBase, setApiBase] = useState(API_BASE);
+  const [apiBase, setApiBase] = useState(getBase());
   const [showApiEdit, setShowApiEdit] = useState(false);
-  const [apiEditValue, setApiEditValue] = useState(API_BASE);
+  const [apiEditValue, setApiEditValue] = useState(getBase());
 
   // Initialize default names on mount
   useEffect(() => {
@@ -130,7 +110,8 @@ export default function AdminDeskPanel() {
   // Check server connectivity
   async function checkServer() {
     try {
-      const base = API_BASE || '';
+      const base = getBase() || '';
+      setApiBase(base);
       const res = await fetch(`${base}/api/snapshots`, { method: 'GET' });
       setConn(res.ok ? 'connected' : 'unavailable');
     } catch {
@@ -291,7 +272,9 @@ export default function AdminDeskPanel() {
   async function saveToServer(snapshot, includeFiles) {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/api/snapshots`, {
+      const base = getBase();
+      setApiBase(base);
+      const res = await fetch(`${base}/api/snapshots`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: snapshot.name, snapshot, includeFiles: !!includeFiles })

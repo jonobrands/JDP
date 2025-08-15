@@ -12,6 +12,9 @@ const api = axios.create({
 // Add a request interceptor to add auth token to requests
 api.interceptors.request.use(
   (config) => {
+    // Always resolve the latest base URL right before the request
+    // This allows runtime override via localStorage or globals without recreating the instance
+    try { config.baseURL = getApiBase(); } catch {}
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

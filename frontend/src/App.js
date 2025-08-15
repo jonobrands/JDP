@@ -4,6 +4,7 @@ import { useJovieStore } from './store/jovieStore';
 import { getMultipleCaregiverRows } from './utils/multipleCaregiver';
 import { AppProvider } from './context/AppContext';
 import * as api from './api';
+import { getUidApiBase } from './api';
 import CopyCell from './CopyCell';
 import { formatTime12hRange } from './utils/formatting';
 import { useExchangeStore } from './store/bucaStore';
@@ -21,15 +22,8 @@ function isUIDParseDisabled() {
 function isUIDEnrichDisabled() {
   try { return localStorage.getItem('casecon:disableUIDEnrich') === '1'; } catch { return false; }
 }
-function getUIDApiBase() {
-  // Allow a localStorage override for quick testing, else env
-  try {
-    const ls = localStorage.getItem('REACT_APP_UID_API_URL');
-    return (ls || process.env.REACT_APP_UID_API_URL || '').toString();
-  } catch {
-    return (process.env.REACT_APP_UID_API_URL || '').toString();
-  }
-}
+// Use centralized resolver for UID API base
+const getUIDApiBase = () => getUidApiBase();
 
 function LogoBar() {
   return (
