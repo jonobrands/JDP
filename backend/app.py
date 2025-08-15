@@ -8,6 +8,7 @@ import json
 
 import os
 CORRECTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'corrections.json')
+SNAPSHOTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'snapshots.json')
 
 def save_corrections_to_disk():
     print("Saving corrections to:", os.path.abspath(CORRECTIONS_FILE))
@@ -21,6 +22,19 @@ def load_corrections_from_disk():
     except (FileNotFoundError, json.JSONDecodeError):
         DATA['corrections'] = []
 
+def load_snapshots_from_disk():
+    try:
+        with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
+            DATA['snapshots'] = json.load(f)
+            if not isinstance(DATA['snapshots'], list):
+                DATA['snapshots'] = []
+    except (FileNotFoundError, json.JSONDecodeError):
+        DATA['snapshots'] = []
+
+def save_snapshots_to_disk():
+    with open(SNAPSHOTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(DATA.get('snapshots', []), f, ensure_ascii=False, indent=2)
+
 app = Flask(__name__)
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
@@ -33,10 +47,12 @@ DATA = {
     'jovie': None,
     'corrections': [],
     'compare_results': None,
+    'snapshots': [],
 }
 
 # Load corrections from disk at startup
 load_corrections_from_disk()
+load_snapshots_from_disk()
 
 @app.route('/')
 def index():
