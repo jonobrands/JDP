@@ -2,7 +2,7 @@ services:
   - type: web
     name: caseconweb-backend
     env: python
-    rootDirectory: backend
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     plan: free
@@ -15,7 +15,7 @@ services:
   - type: web
     name: caseconweb-frontend
     env: node
-    rootDirectory: frontend
+    rootDir: frontend
     buildCommand: npm ci && npm install --no-save serve && npm run build
     startCommand: npx serve -s dist -l $PORT
     plan: free
