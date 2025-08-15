@@ -1,0 +1,540 @@
+import React, { useState } from 'react';
+
+// Logo bar styles
+const LOGO_BAR_STYLE = "sticky top-0 z-30 bg-white flex items-center border-b mb-2 px-4 py-2";
+
+import useBucaStore from './store/bucaStore';
+import useJovieStore from './store/jovieStore';
+import { getMultipleCaregiverRows } from './utils/multipleCaregiver';
+import { AppProvider } from './context/AppContext';
+import * as api from './api';
+import CorrectionsModal from './CorrectionsModal';
+import UniversalCorrectionsModal from './UniversalCorrectionsModal';
+import CopyCell from './CopyCell';
+import { formatTime12hRange } from './utils/formatting';
+import CompareTab from './tabs/CompareTab';
+import ResultsTab from './tabs/ResultsTab';
+import BcasTab from './tabs/CaseNrTab';
+
+const ORANGE = 'text-orange-600';
+
+function LogoBar() {
+  return (
+    <header className={LOGO_BAR_STYLE} style={{minHeight: 48}}>
+      <a href="/" className="flex items-center">
+        <img src="/app_icon.ico" alt="CaseConWeb Logo" className="h-8 w-8 mr-3 rounded shadow" style={{display:'block'}} />
+        <span
+          className="select-none text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 bg-clip-text text-transparent drop-shadow-md flex items-baseline"
+          style={{ fontFamily: 'Poppins, Arial, sans-serif', textShadow: '1px 1px 3px rgba(0,0,0,0.2)' }}
+        >
+          <span
+            style={{
+              fontWeight: 900,
+              letterSpacing: '2px',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+              backgroundImage: 'linear-gradient(90deg, #e0e0e0 0%, #b0b0b0 50%, #f8f8f8 100%)',
+              marginRight: 10,
+            }}
+            className="uppercase"
+          >
+            JOVIE
+          </span>
+          <span
+            style={{
+              fontWeight: 800,
+              letterSpacing: '1.5px',
+              color: '#fb923c',
+              textShadow: '1px 1px 3px rgba(0,0,0,0.18)'
+            }}
+            className="ml-1"
+          >
+            Data Processor
+          </span>
+        </span>
+      </a>
+    </header>
+  );
+}
+
+const TAB_NAMES = ['BUCA', 'JOVIE', 'Compare', 'Results', 'BCAS'];
+
+// --- BUCA TAB ---
+function BucaPanel({ bucaText, setBucaText, onProcess, onClear, onIdentify, onExport }) {
+  const bucaRows = useBucaStore(state => state.bucaRows);
+  return (
+    <div>
+      <div className="bg-gray-50 border rounded p-4 mb-4">
+        <label className="block font-semibold mb-2">Paste BUCA data here (One entry per line)</label>
+        <textarea
+          className="w-full h-24 border rounded p-2 mb-4 pb-8"
+          value={bucaText}
+          onChange={e => setBucaText(e.target.value)}
+          onPaste={e => {
+            setTimeout(() => {
+              const textarea = e.target;
+              textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+            }, 0);
+          }}
+        />
+      </div>
+      <div className="flex gap-4 mb-4">
+        <button className="bg-orange-500 text-white px-6 py-2 rounded font-semibold hover:bg-orange-600" onClick={onProcess}>Process</button>
+        <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded font-semibold hover:bg-gray-400" onClick={onClear}>Clear</button>
+        <button className="bg-orange-400 text-white px-6 py-2 rounded font-semibold hover:bg-orange-500" onClick={onIdentify}>IDENTIFY CG</button>
+      </div>
+      <div className="overflow-x-auto border rounded bg-white mb-4 max-h-[350px] overflow-y-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2 border font-bold">#</th>
+              <th className="p-2 border font-bold">Client</th>
+              <th className="p-2 border font-bold">Caregiver</th>
+              <th className="p-2 border font-bold">Case Number</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...bucaRows].sort((a, b) => (a.client || '').localeCompare(b.client || '')).map((row, idx) => (
+              <tr key={idx}>
+                <CopyCell>{idx + 1}</CopyCell>
+                <CopyCell>{row.client}</CopyCell>
+                <CopyCell>{Array.isArray(row.caregivers) ? row.caregivers.join(', ') : (row.caregiver || '')}</CopyCell>
+                <CopyCell>{row.caseNumber}</CopyCell>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- JOVIE TAB ---
+function JoviePanel({ jovieText, setJovieText, onProcess, onClear, onExport, jovieDate }) {
+  const jovieRows = useJovieStore(state => state.jovieRows);
+  return (
+    <div>
+      <div className="bg-gray-50 border rounded p-4 mb-4">
+        <label className="block font-semibold mb-2">Paste JOVIE data here (In Blocks)</label>
+        <textarea
+          className="w-full h-24 border rounded p-2 mb-4"
+          value={jovieText}
+          onChange={e => setJovieText(e.target.value)}
+        />
+      </div>
+      <div className="flex gap-4 mb-4">
+        <button className="bg-orange-500 text-white px-6 py-2 rounded font-semibold hover:bg-orange-600" onClick={onProcess}>Process</button>
+        <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded font-semibold hover:bg-gray-400" onClick={onClear}>Clear</button>
+      </div>
+      <div className="overflow-x-auto border rounded bg-white mb-4 max-h-[350px] overflow-y-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2 border font-bold">#</th>
+              <th className="p-2 border font-bold">Client</th>
+              <th className="p-2 border font-bold">Caregiver</th>
+              <th className="p-2 border font-bold">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...jovieRows].sort((a, b) => (a.client || '').localeCompare(b.client || '')).map((row, idx) => (
+              <tr key={idx}>
+                <td className="p-2 border">{idx + 1}</td>
+                <td className="p-2 border">{row.client}</td>
+                <td className="p-2 border">{row.caregiver}</td>
+                <td className="p-2 border">{formatTime12hRange(row.time)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- CASE NR VERIFICATION TAB ---
+function CaseNrVerificationPanel({ rows, onRecon, onReport }) {
+  return (
+    <div>
+      <div className="flex gap-4 mb-4">
+        <button className="bg-orange-500 text-white px-6 py-2 rounded font-semibold hover:bg-orange-600" onClick={onRecon}>Recon Now</button>
+        <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded font-semibold hover:bg-gray-400" onClick={onReport}>Report</button>
+      </div>
+      <div className="overflow-x-auto border rounded bg-white mb-2">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2 border font-bold">Line #</th>
+              <th className="p-2 border font-bold">Client</th>
+              <th className="p-2 border font-bold">Caregiver</th>
+              <th className="p-2 border font-bold">Date</th>
+              <th className="p-2 border font-bold">Case #</th>
+              <th className="p-2 border font-bold">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, idx) => (
+              <tr key={idx}>
+                <td className="p-2 border">{row.line || idx + 1}</td>
+                <td className="p-2 border">{row.client}</td>
+                <td className="p-2 border">{row.caregiver}</td>
+                <td className="p-2 border">{row.date || ''}</td>
+                <td className="p-2 border">{row.caseNumber || ''}</td>
+                <td className="p-2 border">{row.result || ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- MAIN PANEL SWITCH ---
+function MainPanel(props) {
+  const bucaRows = useBucaStore(state => state.bucaRows);
+
+  const { currentTab, bucaText, setBucaText, jovieText, setJovieText, rows, onProcess, onClear, onIdentify, onExport, onCompare, onRecon, onReport, onClearResults, jovieDate, showCorrectionsModal, setShowCorrectionsModal, correctionsRows, setCorrectionsRows, handleSaveCorrections, handleTempCorrection, universalCorrectionsOpen, setUniversalCorrectionsOpen, corrections, fetchCorrections } = props;
+  switch (currentTab) {
+    case 0:
+      return <BucaPanel bucaText={bucaText} setBucaText={setBucaText} onProcess={onProcess} onClear={onClear} onIdentify={onIdentify} onExport={onExport} />;
+    case 1:
+      return <JoviePanel jovieText={jovieText} setJovieText={setJovieText} onProcess={onProcess} onClear={onClear} onExport={onExport} jovieDate={jovieDate} />;
+    case 2:
+      return <CompareTab
+        onCompare={onCompare}
+        onClearResults={onClearResults}
+        onExport={onExport}
+        rows={rows}
+        showCorrectionsModal={showCorrectionsModal}
+        setShowCorrectionsModal={setShowCorrectionsModal}
+        correctionsRows={correctionsRows}
+        setCorrectionsRows={setCorrectionsRows}
+        onTempCorrection={handleTempCorrection}
+        handleSaveCorrections={handleSaveCorrections}
+        universalCorrectionsOpen={universalCorrectionsOpen}
+        setUniversalCorrectionsOpen={setUniversalCorrectionsOpen}
+        corrections={corrections}
+        fetchCorrections={fetchCorrections}
+      />;
+    case 3:
+      return <ResultsTab rows={rows} onClearResults={onClearResults} />;
+    case 4:
+      return <BcasTab bucaRows={bucaRows} />;
+    default:
+      return null;
+  }
+}
+
+function OrangeTabs({ current, setCurrent }) {
+  return (
+    <div className="flex border-b bg-white">
+      {TAB_NAMES.map((tab, idx) => (
+        <button
+          key={tab}
+          className={`px-6 py-2 font-semibold border-b-4 transition-colors duration-200 focus:outline-none ${current===idx?'border-orange-500 text-orange-600':'border-transparent text-gray-600 hover:text-orange-500'}`}
+          onClick={() => setCurrent(idx)}
+        >
+          {tab}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export default function App() {
+  // ...other state/hooks
+
+  // Per-row corrections modal state (for Identify CG)
+  const [showCorrectionsModal, setShowCorrectionsModal] = useState(false);
+  const [correctionsRows, setCorrectionsRows] = useState([]);
+  // Universal corrections modal state
+  const [universalCorrectionsOpen, setUniversalCorrectionsOpen] = useState(false);
+  // Universal corrections list
+  const [corrections, setCorrections] = useState([]);
+  // Save a user correction for a Temporary Mismatch and update UI
+  // Fetch corrections from backend
+  const fetchCorrections = async () => {
+    try {
+      const result = await api.getCorrections();
+      setCorrections(result.corrections || []);
+    } catch {}
+  };
+
+  const handleTempCorrection = async (correctionObj, selectedVersion) => {
+    await api.addCorrection(correctionObj);
+    await fetchCorrections();
+    await handleCompare();
+  }
+
+  React.useEffect(() => { fetchCorrections(); }, []);
+
+  const [currentTab, setCurrentTab] = useState(0);
+  const [bucaText, setBucaText] = useState('');
+  const [jovieText, setJovieText] = useState('');
+  const bucaRows = useBucaStore(state => state.bucaRows);
+  const setBucaRows = useBucaStore(state => state.setBucaRows);
+  const jovieRows = useJovieStore(state => state.jovieRows);
+  const setJovieRows = useJovieStore(state => state.setJovieRows);
+  const [jovieDate, setJovieDate] = useState(null);
+  const [rows, setRows] = useState([]); // For analysis/results
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // BUCA tab: process BUCA text and update BUCA table only
+  const handleProcessBuca = async () => {
+    setLoading(true); setError('');
+    try {
+      const result = await api.processBuca(bucaText);
+      let sortedRows = (result.rows || []).sort((a, b) => (a.client || '').localeCompare(b.client || ''));
+      setBucaRows(sortedRows);
+    } catch (e) {
+      setError('Failed to process BUCA data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // JOVIE tab: process JOVIE text and update JOVIE table only
+  const handleProcessJovie = async () => {
+    setLoading(true); setError('');
+    try {
+      const result = await api.processJovie(jovieText);
+      setJovieRows(result.rows || []);
+      setJovieDate(result.date || null);
+    } catch (e) {
+      setError('Failed to process JOVIE data');
+      setJovieDate(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enrich rows with UIDs from the UID Registry API
+  const enrichWithUIDs = async (rows, sideLabel) => {
+    if (!rows || !rows.length) return rows || [];
+    const base = process.env.REACT_APP_UID_API_URL || '';
+    const url = base.endsWith('/resolve') ? base : `${base.replace(/\/$/, '')}/resolve`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows })
+      });
+      if (!res.ok) throw new Error(`UID resolve failed ${res.status}`);
+      const data = await res.json();
+      let resolved = null;
+      if (Array.isArray(data) && data.length === rows.length) {
+        resolved = data;
+      } else if (data && Array.isArray(data.results) && data.results.length === rows.length) {
+        resolved = data.results;
+      }
+      if (!resolved) {
+        console.warn(`[UID] Unexpected response shape for ${sideLabel}. Using original rows.`, data);
+        return rows;
+      }
+      // Merge field-wise, prefer resolved values when present
+      return rows.map((r, i) => ({ ...r, ...resolved[i] }));
+    } catch (e) {
+      console.warn(`[UID] Failed to enrich ${sideLabel}:`, e);
+      return rows;
+    }
+  };
+
+  // Fallback parser to inject UIDs from bracket tokens in client/caregiver strings
+  const injectParsedUIDs = (rows) => {
+    if (!Array.isArray(rows)) return rows || [];
+    const uidRegex = /\[(UID-[^\]]+?)\]/i;
+    const extract = (s) => {
+      if (!s || typeof s !== 'string') return '';
+      const m = s.match(uidRegex);
+      return m ? m[1] : '';
+    };
+    return rows.map((r) => {
+      const row = { ...r };
+      const hasPair = row.mast_uid || row.MAST_UID || row.master_uid || row.MASTER_UID || row.pair_uid || row.pairUID || row.uid || row.UID || row.id;
+      if (!hasPair) {
+        const fromClient = extract(row.client);
+        const fromCare = extract(row.caregiver);
+        const mastToken = [fromClient, fromCare].find(t => /-MAST$/i.test(t));
+        if (mastToken) {
+          row.mast_uid = mastToken;
+        } else {
+          if (fromClient) row.client_mast_uid = fromClient;
+          if (fromCare) row.caregiver_mast_uid = fromCare;
+        }
+      }
+      return row;
+    });
+  };
+
+  // Analysis: compare BUCA & JOVIE locally using UID when available (fallback to client+caregiver)
+  const handleCompare = async () => {
+    setLoading(true); setError('');
+    try {
+      const result = await api.compareData(bucaRows, jovieRows);
+      setRows(Array.isArray(result) ? result : []);
+    } catch (e) {
+      setError('Comparison failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Export to Excel
+  const handleExport = async () => {
+    setLoading(true); setError('');
+    try {
+      const blob = await api.exportResults();
+      const defaultName = 'CaseConResults.xlsx';
+      if (window.showSaveFilePicker) {
+        const fileHandle = await window.showSaveFilePicker({
+          types: [
+            {
+              description: 'Excel file',
+              accept: {
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+              },
+            },
+          ],
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } else {
+        let filename = window.prompt('Enter file name for export:', defaultName);
+        if (!filename) return;
+        if (!filename.endsWith('.xlsx')) filename += '.xlsx';
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          a.remove();
+        }, 100);
+      }
+    } catch (e) {
+      setError('Export failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClear = () => {
+    setBucaText('');
+    setJovieText('');
+    setRows([]);
+    setError('');
+  };
+
+  // Open corrections modal for BUCA rows with multiple caregivers
+  const handleIdentify = async () => {
+    const flagged = getMultipleCaregiverRows(bucaRows);
+    setCorrectionsRows(flagged);
+    setShowCorrectionsModal(flagged.length > 0);
+  };
+
+  // Save corrections to backend and update table
+  const handleSaveCorrections = (corr) => {
+    setShowCorrectionsModal(false);
+    let updated = bucaRows.map(row => {
+      const found = corr.find(c => c.row === row.row);
+      if (found && found.caregivers && found.caregivers.length > 0) {
+        let newRaw = row.raw.replace(
+          /(ESTCaregiver:\s*)([^,\/&and]*)(.*)$/i,
+          `$1${found.caregivers[0]}`
+        );
+        return { ...row, caregivers: found.caregivers, raw: newRaw };
+      }
+      return row;
+    });
+    const deduped = Object.values(updated.reduce((acc, row) => {
+      if (row.row !== undefined && row.row !== null) {
+        acc[row.row] = row;
+      } else {
+        const key = `${row.client || ''}|${row.caseNumber || ''}`;
+        acc[key] = row;
+      }
+      return acc;
+    }, {}));
+    const sorted = [...deduped].sort((a, b) => (a.client || '').localeCompare(b.client || ''));
+    setBucaRows(sorted);
+    setBucaText(sorted.map(row => row.raw).join('\n'));
+  };
+
+  const handleRecon = () => { alert('Recon Now feature coming soon!'); };
+  const handleReport = () => { alert('Report feature coming soon!'); };
+  const handleClearResults = () => { setRows([]); setError(''); };
+
+  return (
+    <AppProvider>
+      <div className="min-h-screen bg-gray-100 flex flex-col">
+        <LogoBar />
+        <div className="bg-white shadow mb-4">
+          <OrangeTabs current={currentTab} setCurrent={setCurrentTab} />
+          <div className="text-center text-xs text-gray-500 mb-2">
+            {jovieDate
+              ? <span className="font-bold">{jovieDate}</span>
+              : currentTab === 0
+                ? 'Ready to process BUCA data'
+                : currentTab === 1
+                  ? 'Ready to process JOVIE data'
+                  : currentTab === 2
+                    ? 'Ready to compare BUCA and JOVIE data'
+                    : currentTab === 3
+                      ? 'Ready to view results'
+                      : currentTab === 4
+                        ? 'Ready for case number verification'
+                        : ''}
+          </div>
+        </div>
+        <main className="flex-1 max-w-5xl mx-auto w-full">
+          {loading && <div className="text-center text-orange-600 py-2">Loading...</div>}
+          {error && <div className="text-center text-red-600 py-2">{error}</div>}
+          <div className="mb-6">
+            <MainPanel
+              currentTab={currentTab}
+              bucaText={bucaText}
+              setBucaText={setBucaText}
+              jovieText={jovieText}
+              setJovieText={setJovieText}
+              rows={rows}
+              onProcess={currentTab === 0 ? handleProcessBuca : currentTab === 1 ? handleProcessJovie : undefined}
+              onClear={handleClear}
+              onIdentify={handleIdentify}
+              onExport={handleExport}
+              onCompare={handleCompare}
+              onRecon={handleRecon}
+              onReport={handleReport}
+              onClearResults={handleClearResults}
+              jovieDate={jovieDate}
+              showCorrectionsModal={showCorrectionsModal}
+              setShowCorrectionsModal={setShowCorrectionsModal}
+              correctionsRows={correctionsRows}
+              setCorrectionsRows={setCorrectionsRows}
+              handleTempCorrection={handleTempCorrection}
+              handleSaveCorrections={handleSaveCorrections}
+              universalCorrectionsOpen={universalCorrectionsOpen}
+              setUniversalCorrectionsOpen={setUniversalCorrectionsOpen}
+              corrections={corrections}
+              fetchCorrections={fetchCorrections}
+            />  
+            <CorrectionsModal
+              open={showCorrectionsModal}
+              onClose={() => setShowCorrectionsModal(false)}
+              rows={correctionsRows}
+              onSave={handleSaveCorrections}
+            />
+          </div>
+        </main>
+        <footer className="bg-gray-100 border-t py-2 px-4 text-xs text-gray-700 flex items-center justify-between">
+          <span>Ready | Jovie Data Processor (JDP) v1.0 | 2025 Jonathan Kleinschmidt – All Rights Reserved</span>
+        </footer>
+      </div>
+    </AppProvider>
+  );
+}
