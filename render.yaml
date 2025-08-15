@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: caseconweb-backend
+    env: python
+    rootDirectory: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  - type: static
+    name: caseconweb-frontend
+    rootDirectory: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    plan: free
+    autoDeploy: true
+    envVars:
+      # Provide the backend URL to the React app at build time
+      - key: REACT_APP_API_BASE
+        fromService:
+          type: web
+          name: caseconweb-backend
+          property: url
+      # UID API base will be derived as `${REACT_APP_API_BASE}/uids` by the frontend resolver

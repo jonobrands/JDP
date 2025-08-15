@@ -42,6 +42,10 @@ load_corrections_from_disk()
 def index():
     return {'status': 'CaseCon backend running'}
 
+@app.route('/health')
+def health():
+    return 'ok', 200
+
 @app.route('/license', methods=['POST'])
 def validate_license():
     data = request.get_json()
