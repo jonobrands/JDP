@@ -12,11 +12,12 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
 
-  - type: static_site
+  - type: web
     name: caseconweb-frontend
+    env: node
     rootDirectory: frontend
     buildCommand: npm ci && npm run build
-    publishPath: dist
+    startCommand: npx serve -s dist -l $PORT
     plan: free
     autoDeploy: true
     envVars:
