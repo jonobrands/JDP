@@ -8,10 +8,28 @@ import CopyCell from './CopyCell';
 import { formatTime12hRange } from './utils/formatting';
 import { useExchangeStore } from './store/bucaStore';
 import usePersistentStore from './store/persistentStore';
+import { enrichWithUIDs } from './utils/uidRegistrySync';
 
 // Logo bar styles
 const LOGO_BAR_STYLE = "sticky top-0 z-30 bg-white flex items-center border-b mb-2 px-4 py-2";
 const ORANGE = 'text-orange-600';
+
+// --- UID DEBUG/CONTROL UTILITIES ---
+function isUIDParseDisabled() {
+  try { return localStorage.getItem('casecon:disableUIDParsing') === '1'; } catch { return false; }
+}
+function isUIDEnrichDisabled() {
+  try { return localStorage.getItem('casecon:disableUIDEnrich') === '1'; } catch { return false; }
+}
+function getUIDApiBase() {
+  // Allow a localStorage override for quick testing, else env
+  try {
+    const ls = localStorage.getItem('REACT_APP_UID_API_URL');
+    return (ls || process.env.REACT_APP_UID_API_URL || '').toString();
+  } catch {
+    return (process.env.REACT_APP_UID_API_URL || '').toString();
+  }
+}
 
 function LogoBar() {
   return (
@@ -55,6 +73,25 @@ function LogoBar() {
 
 const TAB_NAMES = ['BUCA', 'JOVIE', 'Compare', 'TimeCK', 'BCAS', 'RECON', 'UID Registry', 'Admin Desk'];
 
+// Lightweight debug banner to display current UID flags and API base
+function UIDDebugBanner() {
+  const [visible, setVisible] = React.useState(false);
+  React.useEffect(() => {
+    try { setVisible(localStorage.getItem('casecon:showUIDDebug') === '1'); } catch { setVisible(false); }
+  }, []);
+  if (!visible) return null;
+  const base = getUIDApiBase();
+  return (
+    <div className="fixed bottom-2 right-2 z-50 text-xs bg-white/90 backdrop-blur border border-gray-300 rounded px-3 py-2 shadow">
+      <div className="font-semibold text-gray-700 mb-1">UID Debug</div>
+      <div className="text-gray-700">parse: {isUIDParseDisabled() ? 'OFF' : 'ON'}</div>
+      <div className="text-gray-700">enrich: {isUIDEnrichDisabled() ? 'OFF' : 'ON'}</div>
+      <div className="text-gray-700 max-w-[40ch] truncate" title={base}>base: {base || '(none)'}</div>
+      <div className="text-gray-500 mt-1">toggle via localStorage</div>
+    </div>
+  );
+}
+
 // --- BUCA MODULE LOADER ---
 function BucaModule() {
   const [BucaPanel, setBucaPanel] = React.useState(null);
@@ -82,6 +119,7 @@ function BucaModule() {
 
   // Fallback: parse UID tokens from name strings, e.g., "Amy Olthouse[UID-0001-MAST]"
   const injectParsedUIDs = (rows) => {
+    if (isUIDParseDisabled()) return rows || [];
     if (!Array.isArray(rows)) return rows || [];
     const uidRegex = /\[(UID-[^\]]+?)\]/i; // captures content like UID-0001-MAST
     const extract = (s) => {
@@ -100,10 +138,12 @@ function BucaModule() {
         const mastToken = [fromClient, fromCare].find(t => /-MAST$/i.test(t));
         if (mastToken) {
           out.mast_uid = mastToken; // standardize into mast_uid for comparator
+          out._uidSource = out._uidSource || 'parsed';
         } else {
           // Otherwise, store as component UIDs if present
           if (fromClient) out.client_mast_uid = fromClient;
           if (fromCare) out.caregiver_mast_uid = fromCare;
+          if (fromClient || fromCare) out._uidSource = out._uidSource || 'parsed';
         }
       }
       return out;
@@ -816,63 +856,35 @@ export default function App() {
     }
   };
 
-  // Enrich rows with UIDs from the UID Registry API
-  const enrichWithUIDs = async (rows, sideLabel) => {
-    if (!rows || !rows.length) return rows || [];
-    const base = process.env.REACT_APP_UID_API_URL || '';
-    const url = base.endsWith('/resolve') ? base : `${base.replace(/\/$/, '')}/resolve`;
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rows })
-      });
-      if (!res.ok) throw new Error(`UID resolve failed ${res.status}`);
-      const data = await res.json();
-      let resolved = null;
-      if (Array.isArray(data) && data.length === rows.length) {
-        resolved = data;
-      } else if (data && Array.isArray(data.results) && data.results.length === rows.length) {
-        resolved = data.results;
-      }
-      if (!resolved) {
-        console.warn(`[UID] Unexpected response shape for ${sideLabel}. Using original rows.`, data);
-        return rows;
-      }
-      // Merge field-wise, prefer resolved values when present
-      return rows.map((r, i) => ({ ...r, ...resolved[i] }));
-    } catch (e) {
-      console.warn(`[UID] Failed to enrich ${sideLabel}:`, e);
-      return rows;
-    }
-  };
-
   // Fallback parser to inject UIDs from bracket tokens in client/caregiver strings
-  const injectParsedUIDs = (rows) => {
-    if (!Array.isArray(rows)) return rows || [];
-    const uidRegex = /\[(UID-[^\]]+?)\]/i;
-    const extract = (s) => {
-      if (!s || typeof s !== 'string') return '';
-      const m = s.match(uidRegex);
-      return m ? m[1] : '';
-    };
-    return rows.map((r) => {
-      const row = { ...r };
-      const hasPair = row.mast_uid || row.MAST_UID || row.master_uid || row.MASTER_UID || row.pair_uid || row.pairUID || row.uid || row.UID || row.id;
-      if (!hasPair) {
-        const fromClient = extract(row.client);
-        const fromCare = extract(row.caregiver);
-        const mastToken = [fromClient, fromCare].find(t => /-MAST$/i.test(t));
-        if (mastToken) {
-          row.mast_uid = mastToken;
-        } else {
-          if (fromClient) row.client_mast_uid = fromClient;
-          if (fromCare) row.caregiver_mast_uid = fromCare;
-        }
-      }
-      return row;
-    });
+const injectParsedUIDs = (rows) => {
+  if (isUIDParseDisabled()) return rows || [];
+  if (!Array.isArray(rows)) return rows || [];
+  const uidRegex = /\[(UID-[^\]]+?)\]/i;
+  const extract = (s) => {
+    if (!s || typeof s !== 'string') return '';
+    const m = s.match(uidRegex);
+    return m ? m[1] : '';
   };
+  return rows.map((r) => {
+    const row = { ...r };
+    const hasPair = row.mast_uid || row.MAST_UID || row.master_uid || row.MASTER_UID || row.pair_uid || row.pairUID || row.uid || row.UID || row.id;
+    if (!hasPair) {
+      const fromClient = extract(row.client);
+      const fromCare = extract(row.caregiver);
+      const mastToken = [fromClient, fromCare].find(t => /-MAST$/i.test(t));
+      if (mastToken) {
+        row.mast_uid = mastToken;
+        row._uidSource = row._uidSource || 'parsed';
+      } else {
+        if (fromClient) row.client_mast_uid = fromClient;
+        if (fromCare) row.caregiver_mast_uid = fromCare;
+        if (fromClient || fromCare) row._uidSource = row._uidSource || 'parsed';
+      }
+    }
+    return row;
+  });
+};
 
   // Analysis: compare BUCA & JOVIE locally using UID when available (fallback to client+caregiver)
   const handleCompare = async () => {

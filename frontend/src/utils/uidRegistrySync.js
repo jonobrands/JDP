@@ -103,3 +103,17 @@ export async function purgeNameIdMap() {
   } catch {}
   return true;
 }
+
+// Best-effort enrichment using UID registry
+// For now, this is a safe passthrough so callers can rely on the function existing
+// without breaking when the backend map format or connectivity is not guaranteed.
+export async function enrichWithUIDs(rows = [], _sideLabel = '') {
+  try {
+    // In future, we can fetch the nameIdMap and merge resolved UIDs here.
+    // const map = await fetchNameIdMap();
+    // TODO: enrich rows using map
+    return Array.isArray(rows) ? rows : [];
+  } catch (e) {
+    return Array.isArray(rows) ? rows : [];
+  }
+}
