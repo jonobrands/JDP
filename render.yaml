@@ -23,10 +23,7 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "18"
-      # Provide the backend host to the React app at build time
+      # Explicitly set the public backend URL to avoid host mapping issues
       - key: REACT_APP_API_BASE
-        fromService:
-          type: web
-          name: caseconweb-backend
-          property: host
+        value: https://caseconweb-backend.onrender.com
       # UID API base will be derived as `${REACT_APP_API_BASE}/uids` by the frontend resolver
