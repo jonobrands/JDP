@@ -4,6 +4,13 @@ function normalizeBase(u) {
   return String(u || '').trim().replace(/\/$/, '');
 }
 
+function ensureProtocol(u) {
+  const s = String(u || '').trim();
+  if (!s) return s;
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://${s}`;
+}
+
 export function getApiBase() {
   try {
     // 1) Local override for quick testing
@@ -17,7 +24,7 @@ export function getApiBase() {
 
     // 3) Environment variables from .env at build time
     const envBase = process.env.REACT_APP_API_BASE || process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_SERVER_BASE;
-    if (envBase) return normalizeBase(envBase);
+    if (envBase) return normalizeBase(ensureProtocol(envBase));
 
     // 4) Derive from UID API if only that is configured (strip trailing /uids)
     const envUid = process.env.REACT_APP_UID_API_URL;
@@ -54,7 +61,7 @@ export function getUidApiBase() {
 
     // 3) .env explicit UID URL
     const envUid = process.env.REACT_APP_UID_API_URL;
-    if (envUid) return normalizeBase(envUid);
+    if (envUid) return normalizeBase(ensureProtocol(envUid));
 
     // 4) Derive from API base
     return normalizeBase(`${getApiBase()}/uids`);
