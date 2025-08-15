@@ -6,7 +6,6 @@ import { AppProvider } from './context/AppContext';
 import * as api from './api';
 import CopyCell from './CopyCell';
 import { formatTime12hRange } from './utils/formatting';
-import BcasTab from './panels/CaseNrPanel';
 import { useExchangeStore } from './store/bucaStore';
 import usePersistentStore from './store/persistentStore';
 
