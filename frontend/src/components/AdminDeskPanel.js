@@ -112,6 +112,10 @@ export default function AdminDeskPanel() {
     try {
       const base = getBase() || '';
       setApiBase(base);
+      if (!base) {
+        setConn('unavailable');
+        return;
+      }
       const res = await fetch(`${base}/api/snapshots`, { method: 'GET' });
       setConn(res.ok ? 'connected' : 'unavailable');
     } catch {
@@ -274,6 +278,7 @@ export default function AdminDeskPanel() {
       setLoading(true);
       const base = getBase();
       setApiBase(base);
+      if (!base) throw new Error('No backend base URL configured');
       const res = await fetch(`${base}/api/snapshots`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -304,7 +309,10 @@ export default function AdminDeskPanel() {
   async function loadList() {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/api/snapshots`);
+      const base = getBase();
+      setApiBase(base);
+      if (!base) throw new Error('No backend base URL configured');
+      const res = await fetch(`${base}/api/snapshots`);
       if (!res.ok) throw new Error('List unavailable');
       const json = await res.json();
       setSnapshots(Array.isArray(json.snapshots) ? json.snapshots : []);
@@ -318,7 +326,10 @@ export default function AdminDeskPanel() {
 
   async function handleDownload(id) {
     try {
-      const res = await fetch(`${API_BASE}/api/snapshots/${encodeURIComponent(id)}`);
+      const base = getBase();
+      setApiBase(base);
+      if (!base) throw new Error('No backend base URL configured');
+      const res = await fetch(`${base}/api/snapshots/${encodeURIComponent(id)}`);
       if (!res.ok) throw new Error('Download failed');
       const snap = await res.json();
       downloadJson(`${snap.name || id}.casecon.snapshot.json`, snap);
@@ -330,7 +341,10 @@ export default function AdminDeskPanel() {
   async function handleDelete(id) {
     if (!window.confirm('Delete snapshot permanently?')) return;
     try {
-      const res = await fetch(`${API_BASE}/api/snapshots/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const base = getBase();
+      setApiBase(base);
+      if (!base) throw new Error('No backend base URL configured');
+      const res = await fetch(`${base}/api/snapshots/${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       await loadList();
     } catch (e) {
@@ -342,7 +356,10 @@ export default function AdminDeskPanel() {
     let snap = snapObj;
     try {
       if (!snap) {
-        const res = await fetch(`${API_BASE}/api/snapshots/${encodeURIComponent(id)}`);
+        const base = getBase();
+        setApiBase(base);
+        if (!base) throw new Error('No backend base URL configured');
+        const res = await fetch(`${base}/api/snapshots/${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error('Load failed');
         snap = await res.json();
       }
