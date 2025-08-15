@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useJovieStore } from '../store/jovieStore';
 import { useExchangeStore } from '../store/exchangeStore';
 import CopyCell from '../CopyCell';
 import * as api from '../api';
+import { normalizeName } from '../utils/normalizeName';
 import { formatTime12hRange } from '../utils/formatting';
 
 /**
@@ -20,21 +21,6 @@ function JoviePanel({ onStatusUpdate }) {
   const setJovieRows = useJovieStore(state => state.setJovieRows);
   const [jovieDate, setJovieDate] = useState(null);
   const exchange = useExchangeStore();
-
-  // Render helper: if a name is ALL CAPS, convert to Title Case for display only.
-  // This avoids mutating the underlying data coming from backend parsing.
-  const humanizeName = (name) => {
-    const s = (name ?? '').toString();
-    if (!s) return '';
-    const isAllCaps = s === s.toUpperCase();
-    if (!isAllCaps) return s; // respect existing casing
-    return s
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-  };
 
   // Process JOVIE input and attach UIDs
   const handleProcessJovie = async () => {
@@ -130,13 +116,13 @@ function JoviePanel({ onStatusUpdate }) {
               <tr key={idx}>
                 <CopyCell>{idx + 1}</CopyCell>
                 <CopyCell>
-                  {humanizeName(row.client)}
+                  {row.client}
                   {showUIDs && (
                     <span className="text-gray-500 text-xs ml-2">[{row.clientUID || row.client_uid || row.clientId || row.client_id || ''}]</span>
                   )}
                 </CopyCell>
                 <CopyCell>
-                  {humanizeName(row.caregiver)}
+                  {row.caregiver}
                   {showUIDs && (
                     <span className="text-gray-500 text-xs ml-2">[{row.caregiverUID || row.caregiver_uid || row.caregiverId || row.caregiver_id || ''}]</span>
                   )}

@@ -217,6 +217,91 @@ def export():
 import re
 import uuid
 
+# ---------------------------------------------------------------------------
+# Snapshot storage (file-backed) and API
+# ---------------------------------------------------------------------------
+SNAP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'snapshots')
+os.makedirs(SNAP_DIR, exist_ok=True)
+
+def _snap_path(snap_id: str) -> str:
+    return os.path.join(SNAP_DIR, f"{snap_id}.json")
+
+def _list_snapshots():
+    items = []
+    try:
+        for name in os.listdir(SNAP_DIR):
+            if not name.endswith('.json'):
+                continue
+            full = os.path.join(SNAP_DIR, name)
+            try:
+                with open(full, 'r', encoding='utf-8') as f:
+                    snap = json.load(f)
+                stat = os.stat(full)
+                items.append({
+                    'id': snap.get('id') or os.path.splitext(name)[0],
+                    'name': snap.get('name') or os.path.splitext(name)[0],
+                    'createdAt': snap.get('createdAt') or (pd.to_datetime(stat.st_mtime, unit='s').isoformat()),
+                    'createdBy': snap.get('createdBy') or 'unknown',
+                    'appVersion': snap.get('appVersion'),
+                    'schemaVersion': snap.get('schemaVersion'),
+                    'sizeBytes': stat.st_size,
+                })
+            except Exception:
+                # ignore bad file
+                pass
+        items.sort(key=lambda x: str(x.get('createdAt') or ''), reverse=True)
+    except FileNotFoundError:
+        pass
+    return items
+
+@app.get('/api/snapshots')
+def api_list_snapshots():
+    try:
+        return jsonify({ 'snapshots': _list_snapshots() })
+    except Exception as e:
+        return jsonify({ 'error': 'list_failed', 'message': str(e) }), 500
+
+@app.post('/api/snapshots')
+def api_save_snapshot():
+    try:
+        body = request.get_json(silent=True) or {}
+        incoming = body.get('snapshot') or body
+        if not isinstance(incoming, dict):
+            return jsonify({ 'error': 'invalid_snapshot' }), 400
+        snap_id = str(incoming.get('id') or uuid.uuid4())
+        name = body.get('name') or incoming.get('name') or snap_id
+        final = dict(incoming)
+        final['id'] = snap_id
+        final['name'] = name
+        with open(_snap_path(snap_id), 'w', encoding='utf-8') as f:
+            json.dump(final, f, ensure_ascii=False, indent=2)
+        return jsonify({ 'ok': True, 'id': snap_id })
+    except Exception as e:
+        return jsonify({ 'error': 'save_failed', 'message': str(e) }), 500
+
+@app.get('/api/snapshots/<snap_id>')
+def api_get_snapshot(snap_id):
+    try:
+        p = _snap_path(snap_id)
+        if not os.path.exists(p):
+            return jsonify({ 'error': 'not_found' }), 404
+        with open(p, 'r', encoding='utf-8') as f:
+            snap = json.load(f)
+        return jsonify(snap)
+    except Exception as e:
+        return jsonify({ 'error': 'get_failed', 'message': str(e) }), 500
+
+@app.delete('/api/snapshots/<snap_id>')
+def api_delete_snapshot(snap_id):
+    try:
+        p = _snap_path(snap_id)
+        if not os.path.exists(p):
+            return jsonify({ 'error': 'not_found' }), 404
+        os.remove(p)
+        return jsonify({ 'ok': True })
+    except Exception as e:
+        return jsonify({ 'error': 'delete_failed', 'message': str(e) }), 500
+
 @app.route('/process_buca', methods=['POST'])
 def process_buca():
     data = request.get_json()
@@ -227,7 +312,9 @@ def process_buca():
     def parse_buca_line(line):
         import re
         # Find the case number: starts with '00' + letter or digit, or 'CAS', then dash, then alphanum/dash
-        case_number_pattern = r'((?:00[a-zA-Z0-9]|CAS)[-A-Z0-9]+?)(?=\s|Date|ESTCaregiver|$)'
+        # Stop at labels 'Date:' or 'ESTCaregiver:' (with optional whitespace before the label), or any whitespace/end.
+        # This avoids prematurely stopping when 'Date' appears inside another word (e.g., 'Candidate').
+        case_number_pattern = r'((?:00[a-zA-Z0-9]|CAS)[-A-Z0-9]+?)(?=(?:\s*Date:|\s*ESTCaregiver:)|\s|$)'
         case_number_match = re.search(case_number_pattern, line)
         if not case_number_match:
             return {

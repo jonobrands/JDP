@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Scrollable output window utility to align with BUCA/JOVIE */
+  .output-scroll {
+    @apply max-h-[350px] overflow-y-auto;
+  }
+}

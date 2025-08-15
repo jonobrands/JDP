@@ -1,6 +1,6 @@
 import React from 'react';
 
-import useJovieStore from '../store/jovieStore';
+import { useJovieStore } from '../store/jovieStore';
 import { formatTime12hRange } from '../utils/formatting';
 
 import { useState } from 'react';

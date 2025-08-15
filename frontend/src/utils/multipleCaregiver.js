@@ -3,26 +3,45 @@
 
 /**
  * Identifies rows with multiple caregivers.
+ * Handles both 'caregiver' (string with comma-separated names) and 'caregivers' (array) formats.
  * @param {Array} rows - Array of data rows (e.g., BUCA rows)
  * @returns {Array} - Filtered array of rows with multiple caregivers
  */
 export function getMultipleCaregiverRows(rows) {
-  return rows.filter(row =>
-    Array.isArray(row.caregivers) && row.caregivers.length > 1
-  );
+  if (!Array.isArray(rows)) return [];
+  
+  return rows.filter(row => {
+    // Check for array format first
+    if (Array.isArray(row.caregivers)) {
+      return row.caregivers.length > 1;
+    }
+    
+    // Then check for string format (comma-separated)
+    if (typeof row.caregiver === 'string') {
+      const caregivers = row.caregiver.split(',').map(cg => cg.trim()).filter(Boolean);
+      return caregivers.length > 1;
+    }
+    
+    return false;
+  });
 }
 
 /**
  * Resolves a multiple-caregiver row to a single caregiver (by user selection or default).
+ * Handles both 'caregiver' string and 'caregivers' array formats.
  * @param {Object} row - The row to resolve
  * @param {String} selectedCaregiver - The caregiver to select
  * @returns {Object} - The updated row with only the selected caregiver
  */
 export function resolveMultipleCaregiverRow(row, selectedCaregiver) {
-  return {
-    ...row,
-    caregivers: [selectedCaregiver],
-  };
+  // Create a new object to avoid mutating the original
+  const updatedRow = { ...row };
+  
+  // Update both possible property names for consistency
+  updatedRow.caregiver = selectedCaregiver;
+  updatedRow.caregivers = [selectedCaregiver];
+  
+  return updatedRow;
 }
 
 /**

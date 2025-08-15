@@ -1,81 +1,193 @@
-# CaseConWeb Project Recipe: Step-by-Step Recreation Guide
+# CaseConWeb Project Recipe: Implementation Guide
 
-This document provides a comprehensive, blow-by-blow guide to recreate the CaseConWeb app from scratch. Use this as a blueprint for rebuilding or onboarding new developers.
+This document provides a comprehensive guide to the architecture and implementation details of the CaseConWeb application.
 
 ---
 
-## 1. Project Setup
+## 1. System Architecture
 
-### Backend (Flask)
-1. Create a new Python virtual environment.
-2. Install dependencies:
-   - flask
-   - flask-cors
-   - pandas
-   - openpyxl
-   - python-dotenv (optional)
-3. Structure backend directory:
-   - `app.py` (Flask app)
-   - `utils.py` (comparison/correction logic)
-   - `corrections.json` (persistent corrections)
-   - `requirements.txt`
-4. Implement endpoints:
-   - `/process_buca`, `/process_jovie` for parsing
-   - `/process_buca` uses a refined regex for case number extraction, ensuring no trailing characters (e.g., extra 'D' or 'Date') are included even if there is no whitespace after the case number.
-   - `/compare` for comparison logic
-   - `/corrections`, `/add_correction`, `/delete_correction` for correction management
-   - `/export` for Excel export
-5. Implement correction application logic in `utils.py`:
-   - Use `{type, buca, jovie}` structure
-   - Apply corrections by matching `buca` (case-insensitive) and replacing with `jovie`
-6. Ensure corrections are loaded/saved from/to `corrections.json` on startup and every change.
-7. Enable CORS for all origins (development convenience).
+### Backend (Node.js + Express)
+- **Core Dependencies**:
+  - Express.js: Web framework
+  - Prisma: ORM for database operations
+  - PostgreSQL: Primary database
+  - Redis: Session management and caching
+  - JWT: Authentication
+  - Express Validator: Request validation
+  - CORS: Cross-origin resource sharing
+  - Morgan: HTTP request logging
+
+- **Project Structure**:
+  ```
+  backend/
+  ├── prisma/
+  │   ├── schema.prisma    # Database schema
+  │   └── migrations/      # Database migrations
+  ├── src/
+  │   ├── config/         # Configuration files
+  │   ├── controllers/    # Route controllers
+  │   ├── middleware/     # Custom middleware
+  │   ├── models/         # Data models
+  │   ├── routes/         # API routes
+  │   ├── services/       # Business logic
+  │   ├── utils/          # Utility functions
+  │   ├── app.js          # Express app setup
+  │   └── server.js       # Server entry point
+  ├── .env               # Environment variables
+  └── package.json
+  ```
 
 ### Frontend (React + Vite)
-1. Create a new React 18 project with Vite.
-2. Install dependencies:
-   - tailwindcss
-   - xlsx (for Excel export)
-3. Structure frontend directory:
-   - `src/tabs/` for modular tab components (BUCA, JOVIE, ENGINE, Compare, BCAS, etc.)
-   - `src/api.js` for backend API calls
-   - `src/App.js` as main component
-   - `src/UniversalCorrectionsModal.js` for corrections UI
-4. Implement each tab as a persistent React component (always mounted).
-5. **BCAS Tab Sticky Paste Bar:**
-    - Add a sticky input bar at the top of the BCAS tab for rapid, repeatable reservation data entry.
-    - User pastes a reservation block (with Client and BUC Case Number), which auto-fills the JCase for the matching row, compares to BCase, and updates the result.
-    - Shows warnings for not found or duplicate clients/case numbers.
-    - Allows repeated use, one row per paste, with highlight feedback.
-6. Implement Compare tab:
-   - Displays comparison results
-   - Allows adding/removing corrections via modal
-   - Calls `/compare` endpoint and applies corrections
-7. Implement corrections modal:
-   - Displays universal corrections from backend
-   - Allows deletion (calls `/delete_correction`)
-7. Ensure all correction API calls use `{type, buca, jovie}` structure (wrapped as `{ correction: ... }` for add/delete).
-8. Display status bars and provide Excel export for each relevant tab.
+- **Core Dependencies**:
+  - React 18: UI library
+  - Vite: Build tool and dev server
+  - Tailwind CSS: Styling
+  - Zustand: State management
+  - Axios: HTTP client
+  - XLSX: Excel file handling
+  - React Router: Navigation
 
-## 2. Correction Workflow
-1. User identifies mismatch in Compare tab
-2. Adds correction in modal (client or caregiver)
-3. Correction sent to backend and saved in `corrections.json`
-4. On next comparison, backend applies corrections before matching
-5. UI updates to reflect resolved matches (mismatches disappear)
+- **Project Structure**:
+  ```
+  frontend/
+  ├── public/            # Static assets
+  └── src/
+      ├── assets/        # Images, fonts, etc.
+      ├── components/    # Reusable UI components
+      ├── layouts/       # Layout components
+      ├── pages/         # Page components
+      ├── store/         # State management
+      ├── styles/        # Global styles
+      ├── utils/         # Utility functions
+      ├── App.jsx        # Main app component
+      └── main.jsx       # Entry point
+  ```
 
-## 3. Testing & Validation
-- Test with sample data for BUCA, JOVIE, ENGINE
-- Add corrections and verify mismatches disappear
-- Delete corrections and verify mismatches reappear
-- Confirm corrections.json updates on every change
-- Test Excel export
+## 2. Key Features Implementation
 
-## 4. Maintenance & Extension
-- Add new tabs/components as needed
-- Extend correction structure for new fields
-- Harden backend for production (DB, auth, error handling)
-- Improve UI/UX as desired
+### Authentication System
+- JWT-based authentication with refresh tokens
+- Protected routes on both frontend and backend
+- Session management using Redis
+- Role-based access control (RBAC)
+
+### Data Processing Pipeline
+1. **Data Ingestion**:
+   - Excel/CSV file upload
+   - Client-side parsing using XLSX
+   - Data validation and normalization
+
+2. **Data Processing**:
+   - UID generation for clients and caregivers
+   - Multi-caregiver resolution
+   - Case number extraction and validation
+
+3. **Comparison Engine**:
+   - Fuzzy matching for names and case numbers
+   - Confidence scoring for matches
+   - Support for temporary and permanent corrections
+   - Time checking (TimeCK) module provides canonical deviation badges used by Recon
+
+### State Management
+- **Zustand Stores**:
+  - `authStore`: Authentication state and methods
+  - `caseStore`: Case data and operations
+  - `compareStore`: Comparison results and actions
+  - `uiStore`: UI state and preferences
+
+### API Layer
+- RESTful endpoints with consistent response format
+- Request validation and error handling
+- Rate limiting and security headers
+- Comprehensive API documentation (Swagger/OpenAPI)
+
+## 3. Development Workflow
+
+### Local Development
+1. **Prerequisites**:
+   - Node.js 18+
+   - Docker and Docker Compose
+   - Git
+
+2. **Setup**:
+   ```bash
+   # Clone the repository
+   git clone https://github.com/yourusername/CaseConWeb.git
+   cd CaseConWeb
+
+   # Start Docker services
+   docker-compose -f docker-compose.dev.yml up -d
+
+   # Install backend dependencies
+   cd backend
+   npm install
+   npx prisma migrate dev
+   
+   # Install frontend dependencies
+   cd ../frontend
+   npm install
+   
+   # Start development servers
+   cd ../backend && npm run dev
+   cd ../frontend && npm run dev
+   ```
+
+3. **Development Scripts**:
+   - `npm run dev`: Start development server with hot-reload
+   - `npm run build`: Create production build
+   - `npm run test`: Run tests
+   - `npm run lint`: Run linter
+   - `npm run format`: Format code with Prettier
+
+### Testing Strategy
+- Unit tests with Jest
+- Integration tests with Supertest
+- End-to-end tests with Cypress
+- Test coverage reporting
+
+## 4. Deployment
+
+### Production Environment
+- Docker-based deployment
+- Environment-specific configurations
+- Health checks and monitoring
+- Logging and error tracking
+
+### CI/CD Pipeline
+- Automated testing on pull requests
+- Docker image building and pushing
+- Deployment to staging/production
+- Database migrations
+
+## 5. Security Considerations
+
+### Authentication & Authorization
+- JWT with short-lived access tokens
+- Secure HTTP-only cookies for refresh tokens
+- Rate limiting and request validation
+- CORS configuration
+
+### Data Protection
+- Environment variables for sensitive data
+- Input validation and sanitization
+- SQL injection prevention with Prisma
+- CSRF protection
+
+### API Security
+- Request validation
+- Rate limiting
+- Security headers
+- Request/response logging
+
+---
+
+### Admin Desk Snapshot UX
+- Default snapshot name uses local time: `Recon-MM-DD-YYYY- HH:MM`.
+- Save opens a tag modal (Atlanta/Charlotte/Raleigh) and appends `[Tag]` to the name.
+- Cancel aborts the save. Mirror this behavior in any workshop/demo component.
+
+### Module Naming
+- Results panel is now called TimeCKPanel across code, tabs, and exports (filename: `CaseConTimeCK.xlsx`).
 
 ---
 

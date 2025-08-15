@@ -40,8 +40,7 @@ const API_BASE = (() => {
       } catch {}
     }
   } catch {}
-  // Fallback default to match UID registry utility (http://localhost:5000)
-  return 'http://localhost:5000';
+  return '';
 })();
 try { console.info('[AdminDesk] API_BASE =', API_BASE || '(same-origin)'); } catch {}
 
