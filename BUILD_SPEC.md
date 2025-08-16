@@ -3,6 +3,8 @@ Version: 2025.08.12-compare-refinement
 
 This document is a standalone blueprint to rebuild the application without referencing any other files. Follow it to recreate the same behavior and UI.
 
+> Note: This document is superseded by MASTER_BLUEPRINT.md. For the authoritative, consolidated source, see [MASTER_BLUEPRINT.md](./MASTER_BLUEPRINT.md).
+
 ## 1) Tech Stack
 - Frontend: React (Vite or CRA), TailwindCSS (or equivalent utility classes), Zustand for state
 - Backend: Node/Express or Flask (thin layer only if needed for file IO); not required for core UI

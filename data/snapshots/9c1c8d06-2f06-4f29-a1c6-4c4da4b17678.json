@@ -1,0 +1,327 @@
+{
+  "id": "9c1c8d06-2f06-4f29-a1c6-4c4da4b17678",
+  "name": "Recon-08-13-2025- 10:59 [Raleigh]",
+  "createdBy": "unknown",
+  "createdAt": "2025-08-13T08:59:33.524Z",
+  "appVersion": "dev",
+  "schemaVersion": 1,
+  "stores": {
+    "buca": {
+      "text": "Anoop Suresh Daniel Suresh Rajkumar Aruldoss008-W815-6K56DDate: 8/13/2025 ESTCaregiver: Rhonda Moses\nBlake Brown00C-5N3V-Q3F7DDate: 8/11/2025 ESTCaregiver: Cayla Betts\nJayson Westover00R-01YR-P2T6DDate: 8/13/2025 ESTCaregiver: Caroline Toole\nJessica Corbin00M-0JJA-V71QCDate: 6/30/2025 ESTCaregiver: Sammi Gentry\nLalita Deen00M-A54F-UCE8DDate: 8/12/2025 ESTCaregiver: Samantha Hector\nMadi Levite00C-UGS4-4TU5DDate: 8/11/2025 ESTCaregiver: Warrenisha Brown\nMatthias Daus00C-M85W-EXM4DDate: 8/12/2025 ESTCaregiver: Minna Banawan\nPaola Davis00V-WR42-MY66DDate: 8/13/2025 ESTCaregiver: Abigail Stake\nPriyanka Muppa00C-0R27-A8Q1DDate: 8/4/2025 ESTCaregiver: Jada Gamble\nRoss Malcolm00M-VVAS-CN46DDate: 8/8/2025 ESTCaregiver: Patricia Garcia\n",
+      "rows": [
+        {
+          "client": "Anoop Suresh Daniel Suresh Rajkumar Aruldoss",
+          "caseNumber": "008-W815-6K56DDate:",
+          "date": "8/13/2025",
+          "caregiver": "Rhonda Moses",
+          "raw": "Anoop Suresh Daniel Suresh Rajkumar Aruldoss008-W815-6K56DDate: 8/13/2025 ESTCaregiver: Rhonda Moses",
+          "lineNumber": 1,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Blake Brown",
+          "caseNumber": "00C-5N3V-Q3F7DDate:",
+          "date": "8/11/2025",
+          "caregiver": "Cayla Betts",
+          "raw": "Blake Brown00C-5N3V-Q3F7DDate: 8/11/2025 ESTCaregiver: Cayla Betts",
+          "lineNumber": 2,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Jayson Westover",
+          "caseNumber": "00R-01YR-P2T6DDate:",
+          "date": "8/13/2025",
+          "caregiver": "Caroline Toole",
+          "raw": "Jayson Westover00R-01YR-P2T6DDate: 8/13/2025 ESTCaregiver: Caroline Toole",
+          "lineNumber": 3,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Jessica Corbin",
+          "caseNumber": "00M-0JJA-V71QCDate:",
+          "date": "6/30/2025",
+          "caregiver": "Sammi Gentry",
+          "raw": "Jessica Corbin00M-0JJA-V71QCDate: 6/30/2025 ESTCaregiver: Sammi Gentry",
+          "lineNumber": 4,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Lalita Deen",
+          "caseNumber": "00M-A54F-UCE8DDate:",
+          "date": "8/12/2025",
+          "caregiver": "Samantha Hector",
+          "raw": "Lalita Deen00M-A54F-UCE8DDate: 8/12/2025 ESTCaregiver: Samantha Hector",
+          "lineNumber": 5,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Madi Levite",
+          "caseNumber": "00C-UGS4-4TU5DDate:",
+          "date": "8/11/2025",
+          "caregiver": "Warrenisha Brown",
+          "raw": "Madi Levite00C-UGS4-4TU5DDate: 8/11/2025 ESTCaregiver: Warrenisha Brown",
+          "lineNumber": 6,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Matthias Daus",
+          "caseNumber": "00C-M85W-EXM4DDate:",
+          "date": "8/12/2025",
+          "caregiver": "Minna Banawan",
+          "raw": "Matthias Daus00C-M85W-EXM4DDate: 8/12/2025 ESTCaregiver: Minna Banawan",
+          "lineNumber": 7,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Paola Davis",
+          "caseNumber": "00V-WR42-MY66DDate:",
+          "date": "8/13/2025",
+          "caregiver": "Abigail Stake",
+          "raw": "Paola Davis00V-WR42-MY66DDate: 8/13/2025 ESTCaregiver: Abigail Stake",
+          "lineNumber": 8,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Priyanka Muppa",
+          "caseNumber": "00C-0R27-A8Q1DDate:",
+          "date": "8/4/2025",
+          "caregiver": "Jada Gamble",
+          "raw": "Priyanka Muppa00C-0R27-A8Q1DDate: 8/4/2025 ESTCaregiver: Jada Gamble",
+          "lineNumber": 9,
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Ross Malcolm",
+          "caseNumber": "00M-VVAS-CN46DDate:",
+          "date": "8/8/2025",
+          "caregiver": "Patricia Garcia",
+          "raw": "Ross Malcolm00M-VVAS-CN46DDate: 8/8/2025 ESTCaregiver: Patricia Garcia",
+          "lineNumber": 10,
+          "clientUID": "",
+          "caregiverUID": ""
+        }
+      ],
+      "lastUpdated": "2025-08-13T08:33:01.067Z"
+    },
+    "jovie": {
+      "text": "Wed, Aug, 13th\n\nRoss Malcolm\nPatricia Garcia\n8:45AM-5:30PM\nBack-Up Care Instant Book\n\nJayson Westover\nCaroline Toole\n9AM-5PM\nBack-Up Care Instant Book\n\nJessica Corbin\nSammi Gentry\n9AM-4PM\nBack-Up Care Instant Book\n\nPriyanka Muppa\nJada Gamble\n9AM-5PM\nBack-Up Care\n\nPaola Davis\nAbigail Stake\n9AM-2PM\nBack-Up Care\n\nMatthias Daus\nMinna Banawan\n9AM-5:30PM\nBack-Up Care\n\nBlake Brown\nCayla Betts\n9AM-5PM\nBack-Up Care\n\nMadi Levite\nWarrenisha Brown\n9AM-5PM\nBack-Up Care Instant Book\n\nLalita Deen\nSam Hector\n9AM-5PM\nBack-Up Care Instant Book\n\nAnoop Suresh Daniel Suresh Rajkumar Aruldoss\nRhonda Moses\n9AM-5PM\nBack-Up Care",
+      "rows": [
+        {
+          "client": "Anoop Suresh Daniel Suresh Rajkumar Aruldoss",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5PM",
+          "type": "Back-Up Care",
+          "status": "",
+          "caregiver": "Rhonda Moses",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Blake Brown",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5PM",
+          "type": "Back-Up Care",
+          "status": "",
+          "caregiver": "Cayla Betts",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Jayson Westover",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5PM",
+          "type": "Back-Up Care Instant Book",
+          "status": "",
+          "caregiver": "Caroline Toole",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Jessica Corbin",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-4PM",
+          "type": "Back-Up Care Instant Book",
+          "status": "",
+          "caregiver": "Sammi Gentry",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Lalita Deen",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5PM",
+          "type": "Back-Up Care Instant Book",
+          "status": "",
+          "caregiver": "Sam Hector",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Madi Levite",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5PM",
+          "type": "Back-Up Care Instant Book",
+          "status": "",
+          "caregiver": "Warrenisha Brown",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Matthias Daus",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5:30PM",
+          "type": "Back-Up Care",
+          "status": "",
+          "caregiver": "Minna Banawan",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Paola Davis",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-2PM",
+          "type": "Back-Up Care",
+          "status": "",
+          "caregiver": "Abigail Stake",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Priyanka Muppa",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "9AM-5PM",
+          "type": "Back-Up Care",
+          "status": "",
+          "caregiver": "Jada Gamble",
+          "clientUID": "",
+          "caregiverUID": ""
+        },
+        {
+          "client": "Ross Malcolm",
+          "date": "Wed, Aug, 13th",
+          "timeRange": "8:45AM-5:30PM",
+          "type": "Back-Up Care Instant Book",
+          "status": "",
+          "caregiver": "Patricia Garcia",
+          "clientUID": "",
+          "caregiverUID": ""
+        }
+      ]
+    },
+    "compare": {
+      "results": []
+    },
+    "timeck": {
+      "editedValues": {
+        "0": "9:00 am - 5:00 pm",
+        "1": "9:00 am - 5:00 pm",
+        "3": "9:00 am - 4:00 pm",
+        "4": "8:45 am - 5:30 pm",
+        "5": "8:45 am - 5:30 pm",
+        "6": "9:00 am - 5:30 pm",
+        "7": "8:45 am - 5:30 pm",
+        "9": "8:45 am - 5:30 pm"
+      },
+      "deviationMessages": {
+        "0": "YES",
+        "1": "YES",
+        "2": "",
+        "3": "YES",
+        "4": "Arrived early 15m, Left late 30m",
+        "5": "Arrived early 15m, Left late 30m",
+        "6": "YES",
+        "7": "More than hour deviation: Arrived early 15m, Left late 3h 30m",
+        "8": "",
+        "9": "YES"
+      }
+    },
+    "bcas": {
+      "tableRows": [],
+      "editedResults": {
+        "0": "008-W815-6K56D",
+        "1": "00C-5N3V-Q3F7D",
+        "2": "00R-01YR-P2T6D",
+        "3": "00M-0JJA-V71QC",
+        "4": "00M-A54F-UCE8D",
+        "5": "00C-UGS4-4TU5D",
+        "6": "00C-M85W-EXM4D",
+        "7": "00V-WR42-MY66D",
+        "8": "00C-0R27-A8Q1D",
+        "9": "00M-VVAS-CN46D"
+      },
+      "confirmations": {
+        "0": {
+          "parsedCase": "008-W815-6K56D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:26:41.787Z"
+        },
+        "1": {
+          "parsedCase": "00C-5N3V-Q3F7D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:26:52.692Z"
+        },
+        "2": {
+          "parsedCase": "00R-01YR-P2T6D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:26:25.716Z"
+        },
+        "3": {
+          "parsedCase": "00M-0JJA-V71QC",
+          "matched": true,
+          "timestamp": "2025-08-13T07:26:34.899Z"
+        },
+        "4": {
+          "parsedCase": "00M-A54F-UCE8D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:26:47.300Z"
+        },
+        "5": {
+          "parsedCase": "00C-UGS4-4TU5D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:28:41.091Z"
+        },
+        "6": {
+          "parsedCase": "00C-M85W-EXM4D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:28:29.101Z"
+        },
+        "7": {
+          "parsedCase": "00V-WR42-MY66D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:28:51.523Z"
+        },
+        "8": {
+          "parsedCase": "00C-0R27-A8Q1D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:28:58.179Z"
+        },
+        "9": {
+          "parsedCase": "00M-VVAS-CN46D",
+          "matched": true,
+          "timestamp": "2025-08-13T07:26:19.868Z"
+        }
+      }
+    },
+    "recon": {
+      "editedResults": {}
+    }
+  },
+  "ui": {},
+  "temporary": {},
+  "uploads": {
+    "items": []
+  },
+  "meta": {
+    "sizeBytes": 7614,
+    "checksum": "sha256:b9af92e5b29281c33d732d7b3b081aafc22812f0fcecd920ad3b5a5b78d1195d"
+  }
+}

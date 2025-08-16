@@ -8,8 +8,6 @@ import json
 
 import os
 CORRECTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'corrections.json')
-SNAPSHOTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'snapshots.json')
-UIDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uids.json')
 
 def save_corrections_to_disk():
     print("Saving corrections to:", os.path.abspath(CORRECTIONS_FILE))
@@ -23,32 +21,6 @@ def load_corrections_from_disk():
     except (FileNotFoundError, json.JSONDecodeError):
         DATA['corrections'] = []
 
-def load_snapshots_from_disk():
-    try:
-        with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
-            DATA['snapshots'] = json.load(f)
-            if not isinstance(DATA['snapshots'], list):
-                DATA['snapshots'] = []
-    except (FileNotFoundError, json.JSONDecodeError):
-        DATA['snapshots'] = []
-
-def save_snapshots_to_disk():
-    with open(SNAPSHOTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(DATA.get('snapshots', []), f, ensure_ascii=False, indent=2)
-
-def load_uids_from_disk():
-    try:
-        with open(UIDS_FILE, 'r', encoding='utf-8') as f:
-            DATA['uids'] = json.load(f)
-            if not isinstance(DATA['uids'], dict):
-                DATA['uids'] = {}
-    except (FileNotFoundError, json.JSONDecodeError):
-        DATA['uids'] = {}
-
-def save_uids_to_disk():
-    with open(UIDS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(DATA.get('uids', {}), f, ensure_ascii=False, indent=2)
-
 app = Flask(__name__)
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
@@ -61,22 +33,14 @@ DATA = {
     'jovie': None,
     'corrections': [],
     'compare_results': None,
-    'snapshots': [],
-    'uids': {},
 }
 
 # Load corrections from disk at startup
 load_corrections_from_disk()
-load_snapshots_from_disk()
-load_uids_from_disk()
 
 @app.route('/')
 def index():
     return {'status': 'CaseCon backend running'}
-
-@app.route('/health')
-def health():
-    return 'ok', 200
 
 @app.route('/license', methods=['POST'])
 def validate_license():
@@ -337,71 +301,6 @@ def api_delete_snapshot(snap_id):
         return jsonify({ 'ok': True })
     except Exception as e:
         return jsonify({ 'error': 'delete_failed', 'message': str(e) }), 500
-
-# ---------------------------------------------------------------------------
-# UID Registry API
-# ---------------------------------------------------------------------------
-
-@app.get('/uids')
-def get_uids():
-    try:
-        # Return the entire name->id map
-        return jsonify(DATA.get('uids', {}))
-    except Exception as e:
-        return jsonify({ 'error': 'uids_get_failed', 'message': str(e) }), 500
-
-@app.post('/uids')
-def set_uids():
-    try:
-        payload = request.get_json(silent=True) or {}
-        if not isinstance(payload, dict):
-            return jsonify({ 'error': 'invalid_payload' }), 400
-        DATA['uids'] = payload
-        save_uids_to_disk()
-        return jsonify({ 'ok': True, 'count': len(DATA['uids']) })
-    except Exception as e:
-        return jsonify({ 'error': 'uids_set_failed', 'message': str(e) }), 500
-
-@app.post('/uids/ensure')
-def ensure_uids():
-    try:
-        body = request.get_json(silent=True) or {}
-        clients = body.get('clients') or []
-        caregivers = body.get('caregivers') or []
-        if not isinstance(clients, list) or not isinstance(caregivers, list):
-            return jsonify({ 'error': 'invalid_lists' }), 400
-
-        # Ensure entries exist in a single flat map for simplicity: name -> id
-        name_id = DATA.get('uids') or {}
-
-        def norm(s):
-            return str(s).strip()
-
-        import uuid
-        def ensure(name):
-            n = norm(name)
-            if not n:
-                return None
-            if n not in name_id:
-                name_id[n] = str(uuid.uuid4())
-            return name_id[n]
-
-        out_clients = {}
-        out_caregivers = {}
-        for n in clients:
-            uid = ensure(n)
-            if uid:
-                out_clients[norm(n)] = uid
-        for n in caregivers:
-            uid = ensure(n)
-            if uid:
-                out_caregivers[norm(n)] = uid
-
-        DATA['uids'] = name_id
-        save_uids_to_disk()
-        return jsonify({ 'clients': out_clients, 'caregivers': out_caregivers })
-    except Exception as e:
-        return jsonify({ 'error': 'uids_ensure_failed', 'message': str(e) }), 500
 
 @app.route('/process_buca', methods=['POST'])
 def process_buca():

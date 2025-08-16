@@ -1,0 +1,52 @@
+import React, { useState } from 'react';
+import { useAppContext } from '../context/AppContext';
+
+export default function LicenseTab() {
+  const { licenseValid, setLicenseValid } = useAppContext();
+  const [input, setInput] = useState('');
+  const [status, setStatus] = useState(null);
+
+  const handleValidate = async () => {
+    setStatus('Validating...');
+    try {
+      const resp = await fetch('http://localhost:5000/license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: input })
+      });
+      const data = await resp.json();
+      if (data.valid) {
+        setLicenseValid(true);
+        setStatus('License valid!');
+      } else {
+        setLicenseValid(false);
+        setStatus('Invalid license key.');
+      }
+    } catch (err) {
+      setStatus('Error validating license.');
+      setLicenseValid(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">License Validation</h2>
+      <div className="flex gap-2 mb-4">
+        <input
+          className="border px-3 py-2 rounded w-64"
+          placeholder="Enter license key..."
+          value={input}
+          onChange={e => setInput(e.target.value)}
+        />
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700"
+          onClick={handleValidate}
+        >
+          Validate
+        </button>
+      </div>
+      {status && <div className="mt-2 text-sm">{status}</div>}
+      {licenseValid && <div className="text-green-600 font-semibold mt-2">Access granted to all features.</div>}
+    </div>
+  );
+}

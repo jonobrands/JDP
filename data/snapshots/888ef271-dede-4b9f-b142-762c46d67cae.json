@@ -1,0 +1,43 @@
+{
+  "id": "888ef271-dede-4b9f-b142-762c46d67cae",
+  "name": "Recon-08-16-2025- 07:11 [Atlanta]",
+  "createdBy": "unknown",
+  "createdAt": "2025-08-16T05:11:19.987Z",
+  "appVersion": "dev",
+  "schemaVersion": 1,
+  "stores": {
+    "buca": {
+      "text": "",
+      "rows": [],
+      "lastUpdated": "2025-08-16T05:10:12.695Z"
+    },
+    "jovie": {
+      "text": "",
+      "rows": []
+    },
+    "compare": {
+      "results": []
+    },
+    "timeck": {
+      "editedValues": {},
+      "deviationMessages": {}
+    },
+    "bcas": {
+      "tableRows": [],
+      "editedResults": {},
+      "confirmations": {}
+    },
+    "recon": {
+      "editedResults": {}
+    }
+  },
+  "ui": {},
+  "temporary": {},
+  "uploads": {
+    "items": []
+  },
+  "meta": {
+    "sizeBytes": 511,
+    "checksum": "sha256:3a8cb2ad232b68e7b541be2d12ec3c05b4e8ca380aa8ffa041001ea59b2cc7cc"
+  }
+}

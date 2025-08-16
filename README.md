@@ -1,5 +1,11 @@
 # CaseCon (Jovie Data Processor)
 
+> Note: This document is superseded by MASTER_BLUEPRINT.md. For the authoritative source, see [MASTER_BLUEPRINT.md](./MASTER_BLUEPRINT.md).
+
+**Authoritative Docs:** Read the consolidated blueprint here → [MASTER_BLUEPRINT.md](./MASTER_BLUEPRINT.md)
+
+**.env alignment:** `frontend/.env` sets `REACT_APP_UID_API_URL=http://localhost:5000/uids` and `REACT_APP_API_BASE=http://localhost:5000` to keep UID Registry and API bases consistent.
+
 A professional-grade web application for reconciling case/shift data between BUCA and JOVIE sources with advanced comparison and reporting capabilities.
 
 ## 🚀 Tech Stack

@@ -1,9 +1,17 @@
+/**
+ * DEPRECATED MODULE
+ * This axios helper is superseded by `src/api.js`, which centralizes endpoint
+ * definitions and uses env-based API base resolution. New code should import
+ * from `src/api.js`.
+ *
+ * This file remains temporarily for legacy imports; most endpoints here (/auth,
+ * /cases, /sessions) are currently disabled on the backend and will return 503.
+ */
 import axios from 'axios';
-import { getApiBase } from '../api';
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
-  baseURL: getApiBase(),
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,9 +20,6 @@ const api = axios.create({
 // Add a request interceptor to add auth token to requests
 api.interceptors.request.use(
   (config) => {
-    // Always resolve the latest base URL right before the request
-    // This allows runtime override via localStorage or globals without recreating the instance
-    try { config.baseURL = getApiBase(); } catch {}
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getApiBase } from '../api';
 
 // AdminDeskPanel is self-contained and does not import app stores to avoid touching existing code.
 // It discovers optional snapshot providers via globals, and gracefully degrades if the backend routes are missing.
@@ -19,10 +18,31 @@ import { getApiBase } from '../api';
 // - window.__APP_VERSION (optional): string version
 
 const SCHEMA_VERSION = 1;
-const getBase = () => {
-  try { return getApiBase(); } catch { return ''; }
-};
-try { console.info('[AdminDesk] API_BASE =', getBase()); } catch {}
+const API_BASE = (() => {
+  try {
+    // 1) Runtime overrides
+    if (typeof window !== 'undefined' && window.CASECON_API_BASE) {
+      return String(window.CASECON_API_BASE).replace(/\/$/, '');
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const ls = window.localStorage.getItem('casecon_api_base');
+      if (ls) return String(ls).replace(/\/$/, '');
+    }
+    // 2) Build-time env
+    const env = (typeof process !== 'undefined' && process.env) ? process.env : {};
+    const direct = env.REACT_APP_API_BASE;
+    if (direct && typeof direct === 'string') return direct.replace(/\/$/, '');
+    const uidUrl = env.REACT_APP_UID_API_URL;
+    if (uidUrl && typeof uidUrl === 'string') {
+      try {
+        const u = new URL(uidUrl);
+        return `${u.protocol}//${u.host}`;
+      } catch {}
+    }
+  } catch {}
+  return '';
+})();
+try { console.info('[AdminDesk] API_BASE =', API_BASE || '(same-origin)'); } catch {}
 
 function nowIso() {
   return new Date().toISOString();
@@ -91,9 +111,9 @@ export default function AdminDeskPanel() {
   const [busyMsg, setBusyMsg] = useState('');
   const [saveInlineName, setSaveInlineName] = useState('');
   const [conn, setConn] = useState('checking'); // 'checking' | 'connected' | 'unavailable'
-  const [apiBase, setApiBase] = useState(getBase());
+  const [apiBase, setApiBase] = useState(API_BASE);
   const [showApiEdit, setShowApiEdit] = useState(false);
-  const [apiEditValue, setApiEditValue] = useState(getBase());
+  const [apiEditValue, setApiEditValue] = useState(API_BASE);
 
   // Initialize default names on mount
   useEffect(() => {
@@ -110,12 +130,7 @@ export default function AdminDeskPanel() {
   // Check server connectivity
   async function checkServer() {
     try {
-      const base = getBase() || '';
-      setApiBase(base);
-      if (!base) {
-        setConn('unavailable');
-        return;
-      }
+      const base = API_BASE || '';
       const res = await fetch(`${base}/api/snapshots`, { method: 'GET' });
       setConn(res.ok ? 'connected' : 'unavailable');
     } catch {
@@ -276,10 +291,7 @@ export default function AdminDeskPanel() {
   async function saveToServer(snapshot, includeFiles) {
     try {
       setLoading(true);
-      const base = getBase();
-      setApiBase(base);
-      if (!base) throw new Error('No backend base URL configured');
-      const res = await fetch(`${base}/api/snapshots`, {
+      const res = await fetch(`${API_BASE}/api/snapshots`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: snapshot.name, snapshot, includeFiles: !!includeFiles })
@@ -309,10 +321,7 @@ export default function AdminDeskPanel() {
   async function loadList() {
     try {
       setLoading(true);
-      const base = getBase();
-      setApiBase(base);
-      if (!base) throw new Error('No backend base URL configured');
-      const res = await fetch(`${base}/api/snapshots`);
+      const res = await fetch(`${API_BASE}/api/snapshots`);
       if (!res.ok) throw new Error('List unavailable');
       const json = await res.json();
       setSnapshots(Array.isArray(json.snapshots) ? json.snapshots : []);
@@ -326,10 +335,7 @@ export default function AdminDeskPanel() {
 
   async function handleDownload(id) {
     try {
-      const base = getBase();
-      setApiBase(base);
-      if (!base) throw new Error('No backend base URL configured');
-      const res = await fetch(`${base}/api/snapshots/${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/api/snapshots/${encodeURIComponent(id)}`);
       if (!res.ok) throw new Error('Download failed');
       const snap = await res.json();
       downloadJson(`${snap.name || id}.casecon.snapshot.json`, snap);
@@ -341,10 +347,7 @@ export default function AdminDeskPanel() {
   async function handleDelete(id) {
     if (!window.confirm('Delete snapshot permanently?')) return;
     try {
-      const base = getBase();
-      setApiBase(base);
-      if (!base) throw new Error('No backend base URL configured');
-      const res = await fetch(`${base}/api/snapshots/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/snapshots/${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       await loadList();
     } catch (e) {
@@ -356,10 +359,7 @@ export default function AdminDeskPanel() {
     let snap = snapObj;
     try {
       if (!snap) {
-        const base = getBase();
-        setApiBase(base);
-        if (!base) throw new Error('No backend base URL configured');
-        const res = await fetch(`${base}/api/snapshots/${encodeURIComponent(id)}`);
+        const res = await fetch(`${API_BASE}/api/snapshots/${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error('Load failed');
         snap = await res.json();
       }
@@ -465,7 +465,7 @@ export default function AdminDeskPanel() {
           <input
             style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: 6, minWidth: 260 }}
             value={apiEditValue}
-            placeholder="https://casecon-backend.onrender.com"
+            placeholder="http://localhost:5000"
             onChange={e => setApiEditValue(e.target.value)}
           />
           <button

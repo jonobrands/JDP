@@ -1,5 +1,7 @@
 # Next Steps
 
+> Note: This document is superseded by MASTER_BLUEPRINT.md. For the authoritative, consolidated source, see [MASTER_BLUEPRINT.md](./MASTER_BLUEPRINT.md).
+
 ## Immediate QA
 - Validate Recon Status column end-to-end:
   - Paste matching and non-matching case numbers in BCAS; observe Recon: Checked (green) vs Pending (orange).

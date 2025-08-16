@@ -1,77 +1,13 @@
 // API helper for CaseCon backend
-// Centralized API base resolvers: localStorage > runtime globals > .env > derived > sensible default
-function normalizeBase(u) {
-  return String(u || '').trim().replace(/\/$/, '');
-}
-
-function ensureProtocol(u) {
-  const s = String(u || '').trim();
-  if (!s) return s;
-  if (/^https?:\/\//i.test(s)) return s;
-  return `https://${s}`;
-}
-
-export function getApiBase() {
-  try {
-    // 1) Local override for quick testing
-    const ls = (typeof localStorage !== 'undefined') ? localStorage.getItem('casecon_api_base') : null;
-    if (ls) return normalizeBase(ls);
-
-    // 2) Runtime global (can be injected in index.html before bundle)
-    if (typeof window !== 'undefined' && window.__CASECON_API_BASE) {
-      return normalizeBase(window.__CASECON_API_BASE);
-    }
-
-    // 3) Environment variables from .env at build time
-    const envBase = process.env.REACT_APP_API_BASE || process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_SERVER_BASE;
-    if (envBase) return normalizeBase(ensureProtocol(envBase));
-
-    // 4) Derive from UID API if only that is configured (strip trailing /uids)
-    const envUid = process.env.REACT_APP_UID_API_URL;
-    if (envUid) {
-      const derived = String(envUid).replace(/\/?uids\/?$/, '');
-      if (derived && derived !== envUid) return normalizeBase(derived);
-    }
-
-    // 5) Same-origin optional usage when deployed behind a reverse proxy
-    if (typeof window !== 'undefined') {
-      const useSame = process.env.REACT_APP_USE_SAME_ORIGIN === '1' || window.__CASECON_USE_SAME_ORIGIN === true;
-      if (useSame && window.location && window.location.origin) {
-        return normalizeBase(window.location.origin);
-      }
-    }
-
-    // 6) Sensible default
-    return 'https://casecon-backend.onrender.com';
-  } catch (_) {
-    return 'https://casecon-backend.onrender.com';
-  }
-}
-
-export function getUidApiBase() {
-  try {
-    // 1) Local override
-    const ls = (typeof localStorage !== 'undefined') ? localStorage.getItem('casecon_uid_api_base') : null;
-    if (ls) return normalizeBase(ls);
-
-    // 2) Runtime global
-    if (typeof window !== 'undefined' && window.__CASECON_UID_API_BASE) {
-      return normalizeBase(window.__CASECON_UID_API_BASE);
-    }
-
-    // 3) .env explicit UID URL
-    const envUid = process.env.REACT_APP_UID_API_URL;
-    if (envUid) return normalizeBase(ensureProtocol(envUid));
-
-    // 4) Derive from API base
-    return normalizeBase(`${getApiBase()}/uids`);
-  } catch (_) {
-    return normalizeBase(`${getApiBase()}/uids`);
-  }
-}
+// Base URL resolution: prefer explicit API base, fallback to localhost
+const API_BASE =
+  (typeof window !== 'undefined' && window.CASECON_API_BASE) ||
+  process.env.REACT_APP_API_BASE ||
+  process.env.REACT_APP_API_URL ||
+  'http://localhost:5000';
 
 export async function processBuca(bucaText) {
-  const res = await fetch(`${getApiBase()}/process_buca`, {
+  const res = await fetch(`${API_BASE}/process_buca`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ buca_text: bucaText }),
@@ -80,7 +16,7 @@ export async function processBuca(bucaText) {
 }
 
 export async function processJovie(jovieText) {
-  const res = await fetch(`${getApiBase()}/process_jovie`, {
+  const res = await fetch(`${API_BASE}/process_jovie`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jovie_text: jovieText }),
@@ -88,45 +24,59 @@ export async function processJovie(jovieText) {
   return res.json();
 }
 
-export async function uploadBucaJovie(bucaText, jovieText) {
-  const payload = {};
-  if (bucaText) payload.buca_text = bucaText;
-  if (jovieText) payload.jovie_text = jovieText;
-  const res = await fetch(`${getApiBase()}/upload`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  return res.json();
+// Deprecated: endpoint not available on backend
+export async function uploadBucaJovie() {
+  console.warn('uploadBucaJovie is deprecated: no backend endpoint. Use processBuca/processJovie separately.');
+  throw new Error('upload endpoint not available');
 }
 
-export async function compareData(bucaRows, jovieRows) {
-  const res = await fetch(`${getApiBase()}/compare`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bucaRows, jovieRows }),
-  });
-  return res.json();
+// Deprecated: endpoint not available on backend
+export async function compareData() {
+  console.warn('compareData is deprecated: no backend endpoint. Perform comparison client-side if needed.');
+  throw new Error('compare endpoint not available');
 }
 
 export async function getCorrections() {
-  // Deprecated: Corrections feature removed. Return empty without network.
-  return { corrections: [] };
+  try {
+    const res = await fetch(`${API_BASE}/corrections`);
+    if (!res.ok) {
+      console.warn('Corrections endpoint not available, continuing with empty list');
+      return { corrections: [] };
+    }
+    return res.json();
+  } catch (e) {
+    console.warn('Corrections fetch failed, continuing with empty list', e);
+    return { corrections: [] };
+  }
 }
 
 export async function saveCorrections(corrections) {
-  // Deprecated: no-op to avoid breaking callers
-  return { ok: true };
+  const res = await fetch(`${API_BASE}/corrections`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ corrections }),
+  });
+  return res.json();
 }
 
 export async function addCorrection(correction) {
-  // Deprecated: no-op to avoid breaking callers
-  return { ok: true };
+  // Map to corrections POST as a no-op stub, for legacy callers
+  const res = await fetch(`${API_BASE}/corrections`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ correction }),
+  });
+  return res.json();
 }
 
 export async function deleteCorrection(correction) {
-  // Deprecated: no-op to avoid breaking callers
-  return { ok: true };
+  // Map to corrections POST as a no-op stub, for legacy callers
+  const res = await fetch(`${API_BASE}/corrections`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ correction }),
+  });
+  return res.json();
 }
 
 export async function exportResults() {
@@ -144,40 +94,39 @@ export async function exportResults() {
   return new Blob([array], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
-// Temporary implementation for UID ensure/fetch helpers
-const UID_API_BASE = getUidApiBase();
+// UID Registry base for direct GET/POST when needed
+const UID_API_BASE =
+  (process.env.REACT_APP_UID_API_URL && process.env.REACT_APP_UID_API_URL.replace(/\/$/, '')) ||
+  `${API_BASE}/uids`;
 
-// Ensure UIDs exist for the exact names in provided rows (no aliasing or normalization here).
-// Expects backend to upsert and return mappings per exact name.
-// Request shape: { clients: string[], caregivers: string[] }
-// Response shape: { clients: { [name: string]: string }, caregivers: { [name: string]: string } }
+// Build name->UID maps by resolving rows via backend '/uids/resolve'
+// Response: { clients: { [exactName]: uid }, caregivers: { [exactName]: uid } }
 export async function ensureUidsForRows(rows = []) {
   try {
-    const clients = Array.from(new Set((rows || []).map(r => (r && r.client) ? String(r.client).trim() : '').filter(Boolean)));
-    const caregivers = Array.from(new Set((rows || []).flatMap(r => {
-      if (!r) return [];
-      if (Array.isArray(r.caregivers)) return r.caregivers;
-      if (r.caregiver) return [r.caregiver];
-      return [];
-    }).map(n => String(n).trim()).filter(Boolean)));
-
-    const res = await fetch(`${UID_API_BASE}/ensure`, {
+    const res = await fetch(`${API_BASE}/uids/resolve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clients, caregivers })
+      body: JSON.stringify({ rows: Array.isArray(rows) ? rows : [] })
     });
     if (!res.ok) {
-      console.warn('UID ensure call failed with status', res.status);
+      console.warn('UID resolve call failed with status', res.status);
       return { clients: {}, caregivers: {} };
     }
-    const data = await res.json();
-    const safe = {
-      clients: (data && data.clients) || {},
-      caregivers: (data && data.caregivers) || {}
-    };
-    return safe;
+    const resolved = await res.json(); // array of rows with possible clientUID/caregiverUID
+    const out = { clients: {}, caregivers: {} };
+    (resolved || []).forEach((r) => {
+      if (!r) return;
+      const clientName = r.originalClient || r.client;
+      const caregiverName = r.originalCaregiver || r.caregiver;
+      if (clientName && r.clientUID) out.clients[String(clientName)] = String(r.clientUID);
+      if (caregiverName && r.caregiverUID) out.caregivers[String(caregiverName)] = String(r.caregiverUID);
+      // Fallbacks from mast tokens if present
+      if (clientName && !out.clients[clientName] && (r.client_mast_uid || r.mast_uid)) out.clients[String(clientName)] = String(r.client_mast_uid || r.mast_uid);
+      if (caregiverName && !out.caregivers[caregiverName] && r.caregiver_mast_uid) out.caregivers[String(caregiverName)] = String(r.caregiver_mast_uid);
+    });
+    return out;
   } catch (e) {
-    console.warn('UID ensure call error, returning empty maps', e);
+    console.warn('UID resolve call error, returning empty maps', e);
     return { clients: {}, caregivers: {} };
   }
 }

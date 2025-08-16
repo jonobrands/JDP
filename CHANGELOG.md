@@ -1,5 +1,7 @@
 # Changelog
 
+> Note: This document is superseded by MASTER_BLUEPRINT.md. For the authoritative, consolidated source, see [MASTER_BLUEPRINT.md](./MASTER_BLUEPRINT.md).
+
 ## 2025-08-13
 Release: 2025.08.13-admindesk-compare-polish
 

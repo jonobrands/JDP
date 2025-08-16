@@ -1,0 +1,173 @@
+import React from 'react';
+import { useAppContext } from '../context/AppContext';
+
+import CorrectionsModal from '../CorrectionsModal';
+import UniversalCorrectionsModal from '../UniversalCorrectionsModal';
+
+export default function CompareTab({
+  onCompare, onClearResults, onExport, rows = [], showCorrectionsModal, setShowCorrectionsModal, correctionsRows, setCorrectionsRows, handleSaveCorrections, universalCorrectionsOpen, setUniversalCorrectionsOpen, corrections, fetchCorrections
+}) {
+  // Always sort rows alphabetically by client name for display
+  const sortedRows = [...rows].sort((a, b) => (a.client || '').localeCompare(b.client || ''));
+
+  // Helper to normalize names for robust comparison
+  function normalize(str) {
+    return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+
+  return (
+    <div>
+      {/* Legend and Controls */}
+      <div className="flex gap-6 mt-2 mb-4 text-sm items-center">
+        <button
+          className="ml-auto px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs border border-gray-400"
+          onClick={() => setUniversalCorrectionsOpen && setUniversalCorrectionsOpen(true)}
+        >
+          Manage Corrections
+        </button>
+        <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-green-100 border border-green-400 rounded"></span> Exact Match</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-blue-100 border border-blue-400 rounded"></span> Verify Which CG</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-orange-100 border border-orange-400 rounded"></span> Caregiver Mismatch</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-4 h-4 bg-red-100 border border-red-400 rounded"></span> Complete Mismatch</div>
+      </div>
+      <div className="flex gap-4 mb-4">
+        <button className="bg-orange-500 text-white px-6 py-2 rounded font-semibold hover:bg-orange-600" onClick={onCompare}>Compare BUCA & JOVIE</button>
+        <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded font-semibold hover:bg-gray-400" onClick={onClearResults}>Clear Results</button>
+      </div>
+      <div className="overflow-x-auto border rounded bg-white mb-2">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2 font-bold">#</th>
+              <th className="p-2 font-bold">Source</th>
+              <th className="p-2 font-bold">Client</th>
+              <th className="p-2 font-bold">Caregiver</th>
+              <th className="p-2 font-bold">Match Type</th>
+              <th className="p-2 font-bold">Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, idx) => {
+              // Base background from existing tags/types
+              let bg = '';
+              if (row.tag === 'exact_match' || row.match_type === 'Exact Match') bg = 'bg-green-100';
+              else if (row.tag === 'verify_cg' || row.match_type === 'Verify Which CG') bg = 'bg-blue-100';
+              else if (row.tag === 'complete_mismatch' || row.match_type === 'Complete Mismatch') bg = 'bg-red-100';
+
+              // Compute BUCA/JOVIE caregivers for this client/case to detect a portal mismatch for BOTH rows
+              let bucaCG = undefined;
+              let jovieCG = undefined;
+              if (row.source === 'BOTH') {
+                const pick = (obj, names) => {
+                  for (const n of names) {
+                    const v = obj && obj[n];
+                    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+                  }
+                  return '';
+                };
+                // Read both caregivers directly from the consolidated row using common aliases
+                bucaCG = pick(row, [
+                  'bucaCaregiver','buca_caregiver','caregiver_buca','BUCA_CAREGIVER','BUCAcaregiver',
+                  'BUCA Caregiver',
+                  'buca','bucaName','BUCA','BUCA_NAME','caregiverBUCA','caregiver_buca_name',
+                  'bucaCG','BUCA_CG','buca_cg','BUCA CG','bucaCaregiverName','buca_caregiver_name','BUCA_CAREGIVER_NAME'
+                ]) || bucaCG;
+                jovieCG = pick(row, [
+                  'jovieCaregiver','jovie_caregiver','caregiver_jovie','JOVIE_CAREGIVER','JOVIEcaregiver',
+                  'JOVIE Caregiver',
+                  'jovie','jovieName','JOVIE','JOVIE_NAME','caregiverJOVIE','caregiver_jovie_name',
+                  'jovieCG','JOVIE_CG','jovie_cg','JOVIE CG','jovieCaregiverName','jovie_caregiver_name','JOVIE_CAREGIVER_NAME'
+                ]) || jovieCG;
+                // Fallback to legacy sibling lookup only if still missing
+                if (!bucaCG || !jovieCG) {
+                  const nClient = normalize(row.client);
+                  const bucaRow = rows.find(r => r.source === 'BUCA' && normalize(r.client) === nClient);
+                  const jovieRow = rows.find(r => r.source === 'JOVIE' && normalize(r.client) === nClient);
+                  bucaCG = bucaCG || bucaRow?.caregiver;
+                  jovieCG = jovieCG || jovieRow?.caregiver;
+                }
+                // Specific fallback for verify_cg consolidated rows: treat displayed caregiver as BUCA
+                if (!bucaCG && (row.tag === 'verify_cg' || row.match_type === 'Verify Which CG') && row.caregiver) {
+                  bucaCG = String(row.caregiver).trim();
+                }
+                // Debug log to surface available fields during development
+                // Remove or comment out after verification
+                try {
+                  // eslint-disable-next-line no-console
+                  console.log('CompareTab BOTH row debug', {
+                    client: row.client,
+                    match_type: row.match_type,
+                    keys: Object.keys(row || {}),
+                    extracted: { bucaCG, jovieCG },
+                    caregiverField: row.caregiver,
+                  });
+                } catch {}
+              }
+
+              const portalMismatch = row.source === 'BOTH' && bucaCG && jovieCG && normalize(bucaCG) !== normalize(jovieCG);
+
+              // Override background to orange if portal mismatch is detected (wrong caregiver across systems)
+              if (portalMismatch) bg = 'bg-orange-100';
+
+              // Decide what to render in Match Type cell
+              const matchTypeDisplay = portalMismatch
+                ? (
+                    <span>
+                      <span className="font-semibold">Caregiver Mismatch</span>
+                      <span className="ml-2 text-gray-800">BUCA -&gt; {bucaCG}</span>
+                    </span>
+                  )
+                : row.match_type;
+
+              // Decide what to render in Caregiver cell, with inline debug for BOTH rows
+              const mainCaregiver = portalMismatch && bucaCG && jovieCG
+                ? (
+                    <span>
+                      <span>{bucaCG}</span>
+                      <span className="text-gray-500"> • </span>
+                      <span>{jovieCG}</span>
+                    </span>
+                  )
+                : row.caregiver;
+              const caregiverDisplay = (
+                <span>
+                  {mainCaregiver}
+                  {row.source === 'BOTH' && (bucaCG || jovieCG) ? (
+                    <span className="block text-xs text-gray-500 mt-0.5">[BUCA: {bucaCG || '-'} | JOVIE: {jovieCG || '-'}]</span>
+                  ) : null}
+                </span>
+              );
+
+              return (
+                <tr key={idx} className={bg + ' border-b'}>
+                  <td className="p-2">{idx + 1}</td>
+                  <td className="p-2">{row.source}</td>
+                  <td className="p-2">{row.client}</td>
+                  <td className="p-2">{caregiverDisplay}</td>
+                  <td className="p-2">{matchTypeDisplay}</td>
+                  <td className="p-2">{typeof row.confidence === 'number' ? `${Math.round(row.confidence * 100)}%` : ''}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {/* --- Per-row Corrections Modal for BUCA Identify CG --- */}
+      <CorrectionsModal
+        open={showCorrectionsModal}
+        rows={correctionsRows}
+        onClose={() => setShowCorrectionsModal && setShowCorrectionsModal(false)}
+        onSave={handleSaveCorrections}
+      />
+      {/* --- Universal Corrections Modal for Manage Corrections --- */}
+      <UniversalCorrectionsModal
+        open={universalCorrectionsOpen}
+        corrections={corrections}
+        onClose={() => setUniversalCorrectionsOpen && setUniversalCorrectionsOpen(false)}
+        onDelete={fetchCorrections}
+      />
+      {/* Temporary Mismatch workflow removed (replaced by UID system) */}
+    </div>
+  );
+}

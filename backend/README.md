@@ -1,5 +1,7 @@
 # CaseConWeb Backend
 
+> Note: This document is superseded by MASTER_BLUEPRINT.md. For the authoritative, consolidated source, see [MASTER_BLUEPRINT.md](../MASTER_BLUEPRINT.md).
+
 This is the backend service for the CaseConWeb application, providing a RESTful API for the frontend to interact with the database and handle business logic.
 
 ## Features

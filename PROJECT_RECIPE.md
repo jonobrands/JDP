@@ -2,6 +2,8 @@
 
 This document provides a comprehensive guide to the architecture and implementation details of the CaseConWeb application.
 
+> Note: This document is superseded by MASTER_BLUEPRINT.md. For the authoritative, consolidated source, see [MASTER_BLUEPRINT.md](./MASTER_BLUEPRINT.md).
+
 ---
 
 ## 1. System Architecture

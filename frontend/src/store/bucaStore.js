@@ -54,10 +54,10 @@ const initializeStore = () => {
 // Run initialization (non-persistent)
 initializeStore();
 
-// --- EXCHANGE STORE FOR MODULES ---
+// --- RECON EXCHANGE STORE FOR MODULES ---
 // Shared pub/sub for BCAS normalized cases and TimeCK times
 
-export const useExchangeStore = create((set, get) => ({
+export const useReconExchangeStore = create((set, get) => ({
   bucaCases: [], // [{ client, caregiver, caseNumber, line }]
   timeByCase: {}, // { [caseNumberLower]: timeChecked }
 

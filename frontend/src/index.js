@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { getApiBase, getUidApiBase } from './api';
 // Snapshot wiring: import module stores
 import { useBucaStore } from './store/bucaStore';
 import { useJovieStore } from './store/jovieStore';
@@ -14,30 +13,6 @@ import useReconStore from './store/reconStore';
 // Initialize CaseCon snapshot providers/restorer on window before rendering
 if (typeof window !== 'undefined') {
   const g = (window.CaseCon = window.CaseCon || {});
-
-  // Wake backend on app open to spin up Render dyno
-  (function wakeBackend() {
-    try {
-      const base = getApiBase();
-      const uidBase = getUidApiBase();
-      // Hit /health (no-cors so we don't block UI if backend is cold)
-      if (base) {
-        fetch(`${base}/health`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-        // Light list call to ensure Flask app threads are live
-        fetch(`${base}/api/snapshots`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-      }
-      if (uidBase) {
-        fetch(uidBase, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-      }
-      // Optional retry once after a short delay to finish waking if cold start
-      setTimeout(() => {
-        try {
-          if (base) fetch(`${base}/health`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-          if (uidBase) fetch(uidBase, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-        } catch {}
-      }, 4000);
-    } catch {}
-  })();
 
   // Helper safe getters for each store
   const buca = () => useBucaStore.getState();
